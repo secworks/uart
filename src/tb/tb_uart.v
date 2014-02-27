@@ -112,6 +112,26 @@ module tb_uart();
   task dump_dut_state();
     begin
       $display("State of DUT");
+      $display("------------");
+      $display("Inputs and outputs:");
+      $display("rxd = 0x%01x, txd = 0x%01x, debug = 0x%01x", 
+               dut.rxd, dut.txd, dut.debug);
+      $display("");
+
+      $display("Sample and data registers:");
+      $display("rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x", 
+               dut.rxd_reg, dut.rxd_byte_reg);
+      $display("");
+
+      $display("Counters:");
+      $display("rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x", 
+               dut.rxd_bit_ctr_reg, dut.rxd_bitrate_ctr_reg);
+      $display("");
+      
+
+      $display("Control signals and FSM state:");
+      $display("erx_ctrl_reg = 0x%02x", 
+               dut.erx_ctrl_reg);
       $display("");
     end
   endtask // dump_dut_state

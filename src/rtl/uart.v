@@ -113,8 +113,10 @@ module uart(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign txd       = rxd_reg;
-  assign debug_out = rxd_byte_reg;
-  
+//  assign debug_out = {rxd_byte_reg;
+  assign debug_out = {rxd_reg, rxd_reg, rxd_reg, rxd_reg,
+                      rxd_reg, rxd_reg, rxd_reg, rxd_reg};
+ 
   
   //----------------------------------------------------------------
   // reg_update
@@ -125,7 +127,7 @@ module uart(
   //----------------------------------------------------------------
   always @ (posedge clk)
     begin: reg_update
-      if (reset)
+      if (!reset)
         begin
           rxd_reg             <= 0;
           rxd_byte_reg        <= 8'h00;
@@ -237,7 +239,7 @@ module uart(
               begin
                 // Possible start bit detected.
                 rxd_bitrate_ctr_rst = 1;
-                erx_ctrl_new        = ERX_IDLE;
+                erx_ctrl_new        = ERX_START;
                 erx_ctrl_we         = 1;
               end
           end

@@ -54,7 +54,7 @@ module uart(
             output wire          txd,
 
             // Debug
-            output wire [7 : 0]  debug_out
+            output wire [7 : 0]  debug
            );
 
   
@@ -113,9 +113,9 @@ module uart(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign txd       = rxd_reg;
-//  assign debug_out = {rxd_byte_reg;
-  assign debug_out = {rxd_reg, rxd_reg, rxd_reg, rxd_reg,
-                      rxd_reg, rxd_reg, rxd_reg, rxd_reg};
+//  assign debug = {rxd_byte_reg;
+  assign debug = {rxd_reg, rxd_reg, rxd_reg, rxd_reg,
+                  rxd_reg, rxd_reg, rxd_reg, rxd_reg};
  
   
   //----------------------------------------------------------------
@@ -180,8 +180,8 @@ module uart(
         begin
           rxd_bit_ctr_new = 4'h0;
           rxd_bit_ctr_we  = 1;
-
         end
+
       else if (rxd_bit_ctr_inc)
         begin
           rxd_bit_ctr_new = rxd_bit_ctr_reg + 4'b0001;
@@ -205,8 +205,8 @@ module uart(
         begin
           rxd_bitrate_ctr_new = 16'h0000;
           rxd_bitrate_ctr_we  = 1;
-
         end
+
       else if (rxd_bitrate_ctr_inc)
         begin
           rxd_bitrate_ctr_new = rxd_bitrate_ctr_reg + 16'h0001;
@@ -249,20 +249,22 @@ module uart(
           begin
             if (rxd_reg)
               begin
-                // No real start bit, just a glitch.
-                erx_ctrl_new        = ERX_IDLE;
-                erx_ctrl_we         = 1;
+                // Just a glitch.
+                erx_ctrl_new = ERX_IDLE;
+                erx_ctrl_we  = 1;
               end
-            else if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE2)
+            else
               begin
-                // Start bit assumed. We start sampling data.
-                rxd_bit_ctr_rst     = 1;
-                rxd_bitrate_ctr_rst = 1;
-                erx_ctrl_new        = ERX_BITS;
-                erx_ctrl_we         = 1;
+                if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE2)
+                  begin
+                    // Sstart bit assumed. We start sampling data.
+                    rxd_bit_ctr_rst     = 1;
+                    rxd_bitrate_ctr_rst = 1;
+                    erx_ctrl_new        = ERX_BITS;
+                    erx_ctrl_we         = 1;
+                  end
               end
           end
-
         
         ERX_BITS:
           begin
@@ -277,7 +279,7 @@ module uart(
                   end
               end
           end
-            
+        
         default:
           begin
 

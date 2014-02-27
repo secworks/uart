@@ -47,7 +47,7 @@
 
 module uart(
             input wire           clk,
-            input wire           reset,
+            input wire           reset_n,
 
             // External interface
             input wire           rxd,
@@ -127,7 +127,7 @@ module uart(
   //----------------------------------------------------------------
   always @ (posedge clk)
     begin: reg_update
-      if (!reset)
+      if (!reset_n)
         begin
           rxd_reg             <= 0;
           rxd_byte_reg        <= 8'h00;

@@ -166,7 +166,18 @@ module tb_uart();
     end
   endtask // init_sim
 
+
+  //----------------------------------------------------------------
+  // transmit_byte
+  //
+  // Transmit a byte of data to the DUT.
+  //----------------------------------------------------------------
+  task transmit_byte(reg [7 : 0] data);
+    begin
+    end
+  endtask // transmit_byte
   
+
   //----------------------------------------------------------------
   // display_test_result()
   //

@@ -125,7 +125,8 @@ module uart(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-
+  reg tx_data_available;
+  
   
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -260,6 +261,8 @@ module uart(
       rxd_bitrate_ctr_rst = 0;
       rxd_bitrate_ctr_inc = 0;
       rxd_byte_we         = 0;
+      tx_data_available   = 0;
+      
       erx_ctrl_new        = ERX_IDLE;
       erx_ctrl_we         = 0;
       
@@ -322,8 +325,9 @@ module uart(
             rxd_bitrate_ctr_inc = 1;
             if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
               begin
-                erx_ctrl_new = ERX_IDLE;
-                erx_ctrl_we  = 1;
+                tx_data_available = 1;
+                erx_ctrl_new      = ERX_IDLE;
+                erx_ctrl_we       = 1;
               end
           end
         
@@ -345,16 +349,27 @@ module uart(
     begin: external_tx_engine
       txd_new      = 0;
       txd_we       = 0;
+      txd_byte_new = 0;
+      txd_byte_we  = 0;
       etx_ctrl_new = ETX_IDLE;
       etx_ctrl_we  = 1;
 
       case (etx_ctrl_reg)
         ETX_IDLE:
           begin
+            if (tx_data_available)
+              begin
+                txd_byte_new = ~rxd_byte_reg;
+                txd_byte_we  = 1;
+                etx_ctrl_new = ETX_START;
+                etx_ctrl_we  = 1;
+              end
           end
 
         ETX_START:
           begin
+            txd_new = 0;
+            txd_we  = 1;
           end
 
         ETX_BITS:

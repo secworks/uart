@@ -67,10 +67,11 @@ module uart(
   // Clock: 50 MHz
   // Bitrate: 19200 bps
   // Divisor = 50*10E6 / 9600 = 5208
-  parameter DEFAULT_CLK_RATE  = 5208;
-  parameter DEFAULT_CLK_RATE2 = DEFAULT_CLK_RATE / 2;
+  parameter DEFAULT_CLK_RATE      = 5208;
+  parameter DEFAULT_HALF_CLK_RATE = DEFAULT_CLK_RATE / 2;
 
   parameter DEFAULT_DATA_BITS = 8;
+  parameter DEFAULT_STOP_BITS = 2;
   
   parameter ERX_IDLE  = 0; 
   parameter ERX_START = 1;
@@ -142,9 +143,10 @@ module uart(
           // We sample the rx input port every cycle.
           rxd_reg <= rxd;
 
+          // We shift the rxd bit into msb.
           if (rxd_byte_we)
             begin
-              rxd_byte_reg <= {rxd_byte_reg[6 : 1], rxd_reg};
+              rxd_byte_reg <= {rxd_reg, rxd_byte_reg[7 : 1]};
             end
 
           if (rxd_bit_ctr_we)
@@ -256,7 +258,7 @@ module uart(
               end
             else
               begin
-                if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE2)
+                if (rxd_bitrate_ctr_reg == DEFAULT_HALF_CLK_RATE)
                   begin
                     // start bit assumed. We start sampling data.
                     rxd_bit_ctr_rst     = 1;
@@ -269,15 +271,30 @@ module uart(
         
         ERX_BITS:
           begin
-            if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE)
+            if (rxd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
               begin
-                rxd_byte_we     = 1;
-                rxd_bit_ctr_inc = 1;
-                if (rxd_bit_ctr_reg == DEFAULT_DATA_BITS)
+                rxd_bitrate_ctr_inc = 1;
+              end
+            else
+              begin
+                rxd_byte_we         = 1;
+                rxd_bit_ctr_inc     = 1;
+                rxd_bitrate_ctr_rst = 1;
+                if (rxd_bit_ctr_reg == DEFAULT_DATA_BITS - 1)
                   begin
-                    erx_ctrl_new = ERX_IDLE;
+                    erx_ctrl_new = ERX_STOP;
                     erx_ctrl_we  = 1;
                   end
+              end
+          end
+
+        ERX_STOP:
+          begin
+            rxd_bitrate_ctr_inc = 1;
+            if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
+              begin
+                erx_ctrl_new = ERX_IDLE;
+                erx_ctrl_we  = 1;
               end
           end
         

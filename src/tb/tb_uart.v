@@ -46,10 +46,10 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 1;
+  parameter DEBUG = 0;
 
-  parameter CLK_PERIOD = 2;
   parameter CLK_HALF_PERIOD = 1;
+  parameter CLK_PERIOD = CLK_HALF_PERIOD * 2;
   
   
   //----------------------------------------------------------------
@@ -145,8 +145,8 @@ module tb_uart();
   //----------------------------------------------------------------
   task dump_rx_state();
     begin
-      $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, erx_ctrl_reg = 0x%02x", 
-               dut.rxd, dut.rxd_reg, dut.rxd_bit_ctr_reg, 
+      $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, erx_ctrl_reg = 0x%02x", 
+               dut.rxd, dut.rxd_reg, dut.rxd_byte_reg, dut.rxd_bit_ctr_reg, 
                dut.rxd_bitrate_ctr_reg, dut.erx_ctrl_reg);
     end
   endtask // dump_dut_state
@@ -200,25 +200,67 @@ module tb_uart();
       // Start bit
       $display("*** Transmitting start bit.");
       tb_rxd = 0;
-      #(dut.DEFAULT_CLK_RATE);
+      #(CLK_PERIOD * dut.DEFAULT_CLK_RATE);
 
       // Send the bits LSB first.
       for (i = 0 ; i < 8 ; i = i + 1)
         begin
-          $display("*** Transmitting data bit value 0x%01x.", data[i]);
+          $display("*** Transmitting data[%1d] = 0x%01x.", i, data[i]);
           tb_rxd = data[i];
-          #(dut.DEFAULT_CLK_RATE);
+          #(CLK_PERIOD * dut.DEFAULT_CLK_RATE);
         end
 
       // Send two stop bits. I.e. two bit times high (mark) value.
       $display("*** Transmitting two stop bits.");
       tb_rxd = 1;
-      #(2 * dut.DEFAULT_CLK_RATE);
+      #(2 * CLK_PERIOD * dut.DEFAULT_CLK_RATE * dut.DEFAULT_STOP_BITS);
       $display("*** End of transmission.");
     end
   endtask // transmit_byte
+
+
+  //----------------------------------------------------------------
+  // check_transmit
+  //
+  // Transmits a byte and checks that it was captured internally
+  // by the dut.
+  //----------------------------------------------------------------
+  task check_transmit(reg [7 : 0] data);
+    begin
+      tc_ctr = tc_ctr + 1;
+
+      transmit_byte(data);
+      
+      if (dut.rxd_byte_reg == data)
+        begin
+          $display("*** Correct data: 0x%01x captured by the dut.", 
+                   dut.rxd_byte_reg);
+        end
+      else
+        begin
+          $display("*** Incorrect data: 0x%01x captured by the dut Should be: 0x%01x.",
+                   dut.rxd_byte_reg, data);
+          error_ctr = error_ctr + 1;
+        end
+    end
+  endtask // check_transmit
   
 
+  //----------------------------------------------------------------
+  // test_transmit
+  //
+  // Transmit a number of test bytes to the dut.
+  //----------------------------------------------------------------
+  task test_transmit();
+    begin
+      check_transmit(8'h55);
+      check_transmit(8'h42);
+      check_transmit(8'hde);
+      check_transmit(8'had);
+    end
+  endtask // test_transmit
+
+  
   //----------------------------------------------------------------
   // display_test_result()
   //
@@ -251,7 +293,7 @@ module tb_uart();
       reset_dut();
       dump_dut_state();
 
-      transmit_byte(8'h55);
+      test_transmit();
       
       display_test_result();
       $display("*** Simulation done.");

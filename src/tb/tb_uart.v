@@ -46,7 +46,7 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 0;
+  parameter DEBUG = 1;
 
   parameter CLK_PERIOD = 2;
   parameter CLK_HALF_PERIOD = 1;
@@ -99,7 +99,7 @@ module tb_uart();
       #(CLK_PERIOD);
       if (DEBUG)
         begin
-          dump_dut_state();
+          dump_rx_state();
         end
     end
 
@@ -136,6 +136,21 @@ module tb_uart();
     end
   endtask // dump_dut_state
   
+
+  
+  //----------------------------------------------------------------
+  // dump_dut_state()
+  //
+  // Dump the state of the dump when needed.
+  //----------------------------------------------------------------
+  task dump_rx_state();
+    begin
+      $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, erx_ctrl_reg = 0x%02x", 
+               dut.rxd, dut.rxd_reg, dut.rxd_bit_ctr_reg, 
+               dut.rxd_bitrate_ctr_reg, dut.erx_ctrl_reg);
+    end
+  endtask // dump_dut_state
+
   
   //----------------------------------------------------------------
   // reset_dut()
@@ -158,11 +173,14 @@ module tb_uart();
   //----------------------------------------------------------------
   task init_sim();
     begin
+      cycle_ctr = 0;
       error_ctr = 0;
-      tc_ctr = 0;
+      tc_ctr    = 0;
       
       tb_clk = 0;
       tb_reset_n = 1;
+
+      tb_rxd = 1;
     end
   endtask // init_sim
 
@@ -170,10 +188,33 @@ module tb_uart();
   //----------------------------------------------------------------
   // transmit_byte
   //
-  // Transmit a byte of data to the DUT.
+  // Transmit a byte of data to the DUT receive port.
   //----------------------------------------------------------------
   task transmit_byte(reg [7 : 0] data);
+    integer i;
     begin
+      $display("*** Transmitting byte 0x%02x to the dut.", data);
+
+      #10;
+      
+      // Start bit
+      $display("*** Transmitting start bit.");
+      tb_rxd = 0;
+      #(dut.DEFAULT_CLK_RATE);
+
+      // Send the bits LSB first.
+      for (i = 0 ; i < 8 ; i = i + 1)
+        begin
+          $display("*** Transmitting data bit value 0x%01x.", data[i]);
+          tb_rxd = data[i];
+          #(dut.DEFAULT_CLK_RATE);
+        end
+
+      // Send two stop bits. I.e. two bit times high (mark) value.
+      $display("*** Transmitting two stop bits.");
+      tb_rxd = 1;
+      #(2 * dut.DEFAULT_CLK_RATE);
+      $display("*** End of transmission.");
     end
   endtask // transmit_byte
   
@@ -209,6 +250,8 @@ module tb_uart();
       dump_dut_state();
       reset_dut();
       dump_dut_state();
+
+      transmit_byte(8'h55);
       
       display_test_result();
       $display("*** Simulation done.");

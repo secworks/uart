@@ -247,6 +247,7 @@ module uart(
 
         ERX_START:
           begin
+            rxd_bitrate_ctr_inc = 1;
             if (rxd_reg)
               begin
                 // Just a glitch.
@@ -257,7 +258,7 @@ module uart(
               begin
                 if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE2)
                   begin
-                    // Sstart bit assumed. We start sampling data.
+                    // start bit assumed. We start sampling data.
                     rxd_bit_ctr_rst     = 1;
                     rxd_bitrate_ctr_rst = 1;
                     erx_ctrl_new        = ERX_BITS;

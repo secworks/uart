@@ -77,6 +77,11 @@ module uart(
   parameter ERX_START = 1;
   parameter ERX_BITS  = 2;
   parameter ERX_STOP  = 3;
+
+  parameter ETX_IDLE  = 0; 
+  parameter ETX_START = 1;
+  parameter ETX_BITS  = 2;
+  parameter ETX_STOP  = 3;
  
   
   //----------------------------------------------------------------
@@ -104,6 +109,18 @@ module uart(
   reg [2 : 0]  erx_ctrl_new;
   reg          erx_ctrl_we;
   
+  reg          txd_reg;
+  reg          txd_new;
+  reg          txd_we;
+  
+  reg [7 : 0]  txd_byte_reg;
+  reg [7 : 0]  txd_byte_new;
+  reg          txd_byte_we;
+
+  reg [2 : 0]  etx_ctrl_reg;
+  reg [2 : 0]  etx_ctrl_new;
+  reg          etx_ctrl_we;
+  
   
   //----------------------------------------------------------------
   // Wires.
@@ -113,11 +130,10 @@ module uart(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign txd       = rxd_reg;
-//  assign debug = {rxd_byte_reg;
-  assign debug = {rxd_reg, rxd_reg, rxd_reg, rxd_reg,
-                  rxd_reg, rxd_reg, rxd_reg, rxd_reg};
- 
+  assign txd   = txd_reg;
+
+  assign debug = rxd_byte_reg;
+
   
   //----------------------------------------------------------------
   // reg_update
@@ -132,11 +148,13 @@ module uart(
         begin
           rxd_reg             <= 0;
           rxd_byte_reg        <= 8'h00;
-
           rxd_bit_ctr_reg     <= 4'h0;
           rxd_bitrate_ctr_reg <= 16'h0000;
+
+          txd_reg             <= 1;
           
           erx_ctrl_reg        <= ERX_IDLE;
+          etx_ctrl_reg        <= ETX_IDLE;
         end
       else
         begin
@@ -159,9 +177,19 @@ module uart(
               rxd_bitrate_ctr_reg <= rxd_bitrate_ctr_new;
             end
           
+          if (txd_we)
+            begin
+              txd_reg = txd_new;
+            end
+          
           if (erx_ctrl_we)
             begin
               erx_ctrl_reg <= erx_ctrl_new;
+            end
+          
+          if (etx_ctrl_we)
+            begin
+              etx_ctrl_reg <= etx_ctrl_new;
             end
         end
     end // reg_update
@@ -220,9 +248,10 @@ module uart(
   //----------------------------------------------------------------
   // external_rx_engine
   //
-  // Logic that implements the receive engine towards the externa
-  // interface. Detects incoming data, collects it, if required 
-  // checks parity and store correct data into the rx buffer.
+  // Logic that implements the receive engine towards 
+  // the external interface. Detects incoming data, collects it, 
+  // if required checks parity and store correct data into 
+  // the rx buffer.
   //----------------------------------------------------------------
   always @*
     begin: external_rx_engine
@@ -303,8 +332,45 @@ module uart(
 
           end
       endcase // case (erx_ctrl_reg)
-      
     end // external_rx_engine
+
+
+  //----------------------------------------------------------------
+  // external_tx_engine
+  //
+  // Logic that implements the transmit engine towards 
+  // the external interface.
+  //----------------------------------------------------------------
+  always @*
+    begin: external_tx_engine
+      txd_new      = 0;
+      txd_we       = 0;
+      etx_ctrl_new = ETX_IDLE;
+      etx_ctrl_we  = 1;
+
+      case (etx_ctrl_reg)
+        ETX_IDLE:
+          begin
+          end
+
+        ETX_START:
+          begin
+          end
+
+        ETX_BITS:
+          begin
+          end
+
+        ETX_STOP:
+          begin
+          end
+        
+        default:
+          begin
+
+          end
+      endcase // case (etx_ctrl_reg)
+    end // external_tx_engine
   
 endmodule // uart
 

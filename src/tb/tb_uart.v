@@ -72,7 +72,9 @@ module tb_uart();
   reg [7 : 0]  tb_txd_data;
   wire         tb_txd_ack;
 
+  wire [7 : 0] tb_debug;
   
+
   //----------------------------------------------------------------
   // Device Under Test.
   //----------------------------------------------------------------
@@ -82,15 +84,17 @@ module tb_uart();
            
            .rxd(tb_rxd),
            .txd(tb_txd),
+           
+           .rxd_syn(tb_rxd_syn),
+           .rxd_data(tb_rxd_data),
+           .rxd_ack(tb_rxd_ack),
+           
+           // Internal transmit interface.
+           .txd_syn(tb_txd_syn),
+           .txd_data(tb_txd_data),
+           .txd_ack(tb_tcd_ack),
 
-            .rxd_syn(tb_rxd_syn),
-            .rxd_data(tb_rxd_data),
-            .rxd_ack(tb_rxd_ack),
-
-            // Internal transmit interface.
-            .txd_syn(tb_txd_syn),
-            .txd_data(tb_txd_data),
-            .txd_ack(tb_tcd_ack)
+           .debug(tb_debug)
           );
   
 

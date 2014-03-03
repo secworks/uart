@@ -66,10 +66,10 @@ module tb_uart();
 
   wire         tb_rxd_syn;
   wire [7 : 0] tb_rxd_data;
-  reg          tb_rxd_ack;
+  wire         tb_rxd_ack;
 
-  reg          tb_txd_syn;
-  reg [7 : 0]  tb_txd_data;
+  wire         tb_txd_syn;
+  wire [7 : 0] tb_txd_data;
   wire         tb_txd_ack;
 
   wire [7 : 0] tb_debug;
@@ -96,6 +96,14 @@ module tb_uart();
 
            .debug(tb_debug)
           );
+
+  //----------------------------------------------------------------
+  // Concurrent assignments.
+  //----------------------------------------------------------------
+  // We connect the so called internal ports on the dut together.
+  assign tb_txd_syn  = tb_rxd_syn;
+  assign tb_txd_data = tb_rxd_data;
+  assign tb_rxd_ack  = tb_txd_ack;
   
 
   //----------------------------------------------------------------
@@ -123,6 +131,19 @@ module tb_uart();
         end
     end
 
+
+  //----------------------------------------------------------------
+  // tx_monitor
+  //
+  // Observes what happens on the dut tx port and reports it.
+  //----------------------------------------------------------------
+  always @*
+    begin : tx_monitor
+      
+
+    end
+   
+    
   
   //----------------------------------------------------------------
   // dump_dut_state()

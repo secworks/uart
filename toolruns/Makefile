@@ -61,6 +61,7 @@ help:
 	@echo "------------------"
 	@echo "all:      Build all simulation targets."
 	@echo "uart:     Build the uart simulation target."
+	@echo "sim-uart: Run the uart simulation."
 	@echo "clean:    Delete all built files."
 
 #===================================================================

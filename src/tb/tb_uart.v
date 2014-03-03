@@ -46,10 +46,11 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 0;
+  parameter DEBUG           = 0;
+  parameter VERBOSE         = 1;
 
   parameter CLK_HALF_PERIOD = 1;
-  parameter CLK_PERIOD = CLK_HALF_PERIOD * 2;
+  parameter CLK_PERIOD      = CLK_HALF_PERIOD * 2;
   
   
   //----------------------------------------------------------------
@@ -122,13 +123,18 @@ module tb_uart();
   //----------------------------------------------------------------
   always
     begin : sys_monitor
-      #(CLK_PERIOD);
+      #(CLK_PERIOD);      
       if (DEBUG)
         begin
           dump_rx_state();
           dump_tx_state();
           $display("");
         end
+      if (VERBOSE)
+        begin
+          $display("cycle: 0x%016x", cycle_ctr);
+        end
+      cycle_ctr = cycle_ctr + 1;
     end
 
 
@@ -137,12 +143,10 @@ module tb_uart();
   //
   // Observes what happens on the dut tx port and reports it.
   //----------------------------------------------------------------
-  always @*
-    begin : tx_monitor
-      
-
-    end
-   
+//  always @*
+//    begin : tx_monitor
+//    end
+//   
     
   
   //----------------------------------------------------------------

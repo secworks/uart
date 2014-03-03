@@ -46,7 +46,7 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 1;
+  parameter DEBUG = 0;
 
   parameter CLK_HALF_PERIOD = 1;
   parameter CLK_PERIOD = CLK_HALF_PERIOD * 2;
@@ -63,7 +63,14 @@ module tb_uart();
   reg          tb_reset_n;
   reg          tb_rxd;
   wire         tb_txd;
-  wire [7 : 0] tb_debug;
+
+  wire         tb_rxd_syn;
+  wire [7 : 0] tb_rxd_data;
+  reg          tb_rxd_ack;
+
+  reg          tb_txd_syn;
+  reg [7 : 0]  tb_txd_data;
+  wire         tb_txd_ack;
 
   
   //----------------------------------------------------------------
@@ -76,7 +83,14 @@ module tb_uart();
            .rxd(tb_rxd),
            .txd(tb_txd),
 
-           .debug(tb_debug)
+            .rxd_syn(tb_rxd_syn),
+            .rxd_data(tb_rxd_data),
+            .rxd_ack(tb_rxd_ack),
+
+            // Internal transmit interface.
+            .txd_syn(tb_txd_syn),
+            .txd_data(tb_txd_data),
+            .txd_ack(tb_tcd_ack)
           );
   
 
@@ -116,8 +130,8 @@ module tb_uart();
       $display("State of DUT");
       $display("------------");
       $display("Inputs and outputs:");
-      $display("rxd = 0x%01x, txd = 0x%01x, debug = 0x%01x", 
-               dut.rxd, dut.txd, dut.debug);
+      $display("rxd = 0x%01x, txd = 0x%01x,", 
+               dut.rxd, dut.txd);
       $display("");
 
       $display("Sample and data registers:");

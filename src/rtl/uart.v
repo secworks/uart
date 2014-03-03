@@ -61,10 +61,7 @@ module uart(
             // Internal transmit interface.
             input wire          txd_syn,
             input wire [7 : 0]  txd_data,
-            output wire         txd_ack,
-            
-            // Debug
-            output wire [7 : 0] debug
+            output wire         txd_ack
            );
 
   
@@ -153,9 +150,9 @@ module uart(
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign txd   = txd_reg;
+  assign txd      = txd_reg;
 
-  assign debug = txd_byte_reg;
+  assign rxd_data = rxd_byte_reg;
 
   
   //----------------------------------------------------------------

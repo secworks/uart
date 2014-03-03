@@ -46,7 +46,7 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG           = 0;
+  parameter DEBUG           = 1;
   parameter VERBOSE         = 0;
 
   parameter CLK_HALF_PERIOD = 1;
@@ -152,7 +152,7 @@ module tb_uart();
   //----------------------------------------------------------------
   // dump_dut_state()
   //
-  // Dump the state of the dump when needed.
+  // Dump the state of the dut when needed.
   //----------------------------------------------------------------
   task dump_dut_state();
     begin
@@ -184,30 +184,30 @@ module tb_uart();
 
   
   //----------------------------------------------------------------
-  // dump_dut_state()
+  // dump_rx_state()
   //
-  // Dump the state of the dump when needed.
+  // Dump the state of the rx engine.
   //----------------------------------------------------------------
   task dump_rx_state();
     begin
-      $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, erx_ctrl_reg = 0x%02x", 
+      $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, rxd_syn = 0x%01x, erx_ctrl_reg = 0x%02x", 
                dut.rxd, dut.rxd_reg, dut.rxd_byte_reg, dut.rxd_bit_ctr_reg, 
-               dut.rxd_bitrate_ctr_reg, dut.erx_ctrl_reg);
+               dut.rxd_bitrate_ctr_reg, dut.rxd_syn, dut.erx_ctrl_reg);
     end
   endtask // dump_dut_state
   
 
   
   //----------------------------------------------------------------
-  // dump_dut_state()
+  // dump_tx_state()
   //
-  // Dump the state of the dump when needed.
+  // Dump the state of the tx engine.
   //----------------------------------------------------------------
   task dump_tx_state();
     begin
-      $display("txd = 0x%01x, txd_reg = 0x%01x, txd_byte_reg = 0x%01x, txd_bit_ctr_reg = 0x%01x, txd_bitrate_ctr_reg = 0x%02x, etx_ctrl_reg = 0x%02x", 
+      $display("txd = 0x%01x, txd_reg = 0x%01x, txd_byte_reg = 0x%01x, txd_bit_ctr_reg = 0x%01x, txd_bitrate_ctr_reg = 0x%02x, txd_ack = 0x%01x, etx_ctrl_reg = 0x%02x", 
                dut.txd, dut.txd_reg, dut.txd_byte_reg, dut.txd_bit_ctr_reg, 
-               dut.txd_bitrate_ctr_reg, dut.etx_ctrl_reg);
+               dut.txd_bitrate_ctr_reg, dut.txd_ack, dut.etx_ctrl_reg);
     end
   endtask // dump_dut_state
 

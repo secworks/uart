@@ -116,6 +116,10 @@ module uart(
   reg          rxd_bitrate_ctr_rst;
   reg          rxd_bitrate_ctr_inc;
 
+  reg          rxd_syn_reg;
+  reg          rxd_syn_new;
+  reg          rxd_syn_we;
+  
   reg [2 : 0]  erx_ctrl_reg;
   reg [2 : 0]  erx_ctrl_new;
   reg          erx_ctrl_we;
@@ -139,6 +143,10 @@ module uart(
   reg          txd_bitrate_ctr_we;
   reg          txd_bitrate_ctr_rst;
   reg          txd_bitrate_ctr_inc;
+
+  reg          txd_ack_reg;
+  reg          txd_ack_new;
+  reg          txd_ack_we;
   
   reg [2 : 0]  etx_ctrl_reg;
   reg [2 : 0]  etx_ctrl_new;
@@ -148,19 +156,15 @@ module uart(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg tx_data_available;
-
-  reg tmp_rxd_syn;
-  reg tmp_txd_ack;
   
   
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign txd      = txd_reg;
-  assign rxd_syn  = tmp_rxd_syn;
+  assign rxd_syn  = rxd_syn_reg;
   assign rxd_data = rxd_byte_reg;
-  assign txd_ack  = tmp_txd_ack;
+  assign txd_ack  = txd_ack_reg;
   assign debug    = txd_byte_reg;
   
   
@@ -179,13 +183,14 @@ module uart(
           rxd_byte_reg        <= 8'h00;
           rxd_bit_ctr_reg     <= 4'h0;
           rxd_bitrate_ctr_reg <= 16'h0000;
-
+          rxd_syn_reg         <= 0;
+          erx_ctrl_reg        <= ERX_IDLE;
+          
           txd_reg             <= 1;
           txd_byte_reg        <= 8'h00;
           txd_bit_ctr_reg     <= 4'h0;
           txd_bitrate_ctr_reg <= 16'h0000;
-          
-          erx_ctrl_reg        <= ERX_IDLE;
+          txd_ack_reg         <= 0;
           etx_ctrl_reg        <= ETX_IDLE;
         end
       else
@@ -209,6 +214,16 @@ module uart(
               rxd_bitrate_ctr_reg <= rxd_bitrate_ctr_new;
             end
           
+          if (rxd_syn_we)
+            begin
+              rxd_syn_reg = rxd_syn_new;
+            end
+          
+          if (erx_ctrl_we)
+            begin
+              erx_ctrl_reg <= erx_ctrl_new;
+            end
+          
           if (txd_we)
             begin
               txd_reg = txd_new;
@@ -229,9 +244,9 @@ module uart(
               txd_bitrate_ctr_reg <= txd_bitrate_ctr_new;
             end
           
-          if (erx_ctrl_we)
+          if (txd_ack_we)
             begin
-              erx_ctrl_reg <= erx_ctrl_new;
+              txd_ack_reg = txd_ack_new;
             end
           
           if (etx_ctrl_we)
@@ -358,8 +373,8 @@ module uart(
       rxd_bitrate_ctr_rst = 0;
       rxd_bitrate_ctr_inc = 0;
       rxd_byte_we         = 0;
-      tx_data_available   = 0;
-      tmp_rxd_syn         = 0;
+      rxd_syn_new         = 0;
+      rxd_syn_we          = 0;
       erx_ctrl_new        = ERX_IDLE;
       erx_ctrl_we         = 0;
       
@@ -424,20 +439,25 @@ module uart(
             rxd_bitrate_ctr_inc = 1;
             if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
               begin
+                rxd_syn_new  = 1;
+                rxd_syn_we   = 1;
                 erx_ctrl_new = ERX_SYN;
                 erx_ctrl_we  = 1;
               end
           end
+
         
         ERX_SYN:
           begin
-            tmp_rxd_syn = 1;
             if (txd_ack)
               begin
+                rxd_syn_new  = 0;
+                rxd_syn_we   = 1;
                 erx_ctrl_new = ERX_IDLE;
                 erx_ctrl_we  = 1;
               end
           end
+
         
         default:
           begin
@@ -463,7 +483,8 @@ module uart(
       txd_bit_ctr_inc     = 0;
       txd_bitrate_ctr_rst = 0;
       txd_bitrate_ctr_inc = 0;
-      tmp_txd_ack         = 0;
+      txd_ack_new         = 0;
+      txd_ack_we          = 0;
       etx_ctrl_new        = ETX_IDLE;
       etx_ctrl_we         = 0;
 
@@ -476,6 +497,8 @@ module uart(
                 txd_we              = 1;
                 txd_byte_new        = txd_data;
                 txd_byte_we         = 1;
+                txd_ack_new         = 1;
+                txd_ack_we          = 1;
                 txd_bitrate_ctr_rst = 1;
                 etx_ctrl_new        = ETX_ACK;
                 etx_ctrl_we         = 1;
@@ -485,9 +508,13 @@ module uart(
         
         ETX_ACK:
           begin
-            tmp_txd_ack  = 1;
-            etx_ctrl_new = ETX_START;
-            etx_ctrl_we  = 1;
+            if (!txd_syn)
+              begin
+                txd_ack_new  = 0;
+                txd_ack_we   = 1;
+                etx_ctrl_new = ETX_START;
+                etx_ctrl_we  = 1;
+              end
           end
         
         ETX_START:
@@ -541,6 +568,7 @@ module uart(
                 etx_ctrl_we  = 1;
               end
           end
+
         
         default:
           begin

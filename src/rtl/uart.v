@@ -117,6 +117,18 @@ module uart(
   reg [7 : 0]  txd_byte_new;
   reg          txd_byte_we;
 
+  reg [4 : 0]  txd_bit_ctr_reg;
+  reg [4 : 0]  txd_bit_ctr_new;
+  reg          txd_bit_ctr_we;
+  reg          txd_bit_ctr_rst;
+  reg          txd_bit_ctr_inc;
+
+  reg [15 : 0] txd_bitrate_ctr_reg;
+  reg [15 : 0] txd_bitrate_ctr_new;
+  reg          txd_bitrate_ctr_we;
+  reg          txd_bitrate_ctr_rst;
+  reg          txd_bitrate_ctr_inc;
+  
   reg [2 : 0]  etx_ctrl_reg;
   reg [2 : 0]  etx_ctrl_new;
   reg          etx_ctrl_we;
@@ -153,6 +165,8 @@ module uart(
           rxd_bitrate_ctr_reg <= 16'h0000;
 
           txd_reg             <= 1;
+          txd_bit_ctr_reg     <= 4'h0;
+          txd_bitrate_ctr_reg <= 16'h0000;
           
           erx_ctrl_reg        <= ERX_IDLE;
           etx_ctrl_reg        <= ETX_IDLE;
@@ -181,6 +195,16 @@ module uart(
           if (txd_we)
             begin
               txd_reg = txd_new;
+            end
+
+          if (txd_bit_ctr_we)
+            begin
+              txd_bit_ctr_reg <= txd_bit_ctr_new;
+            end
+
+          if (txd_bitrate_ctr_we)
+            begin
+              txd_bitrate_ctr_reg <= txd_bitrate_ctr_new;
             end
           
           if (erx_ctrl_we)

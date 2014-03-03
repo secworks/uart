@@ -83,20 +83,24 @@ def main():
         print "Opening device."
         
     # Send a byte and try to get the response.
-    test_byte = '\xaa'
-    ser.write(test_byte)
-    if verbose:
-        print "transmitting byte 0x%0x" % ord(test_byte)
+    testdata = ['\xab', '\xaa', '\x00', '\x01', '\xf1', '\x0f', '\xff', '\x07']
+    for tx_byte in testdata:
+        ser.write(tx_byte)
+        if verbose:
+            print "transmitting byte 0x%02x" % ord(tx_byte)
 
     
     if verbose:
         print "Waiting for response..."
 
-    response = ""
-    while not len(response):
-        response = ser.read()
-        if len(response):
-            print "received response: 0x%0x" % ord(response)
+    for i in range(8):
+        response = ""
+        while not len(response):
+            response = ser.read()
+            if len(response):
+                print "received response: 0x%02x" % ord(response)
+
+
 
     # Exit nicely.
     if verbose:

@@ -47,7 +47,7 @@ module tb_uart();
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
   parameter DEBUG           = 0;
-  parameter VERBOSE         = 1;
+  parameter VERBOSE         = 0;
 
   parameter CLK_HALF_PERIOD = 1;
   parameter CLK_PERIOD      = CLK_HALF_PERIOD * 2;
@@ -205,9 +205,9 @@ module tb_uart();
   //----------------------------------------------------------------
   task dump_tx_state();
     begin
-      $display("txd = 0x%01x, txd_reg = 0x%01x, txd_byte_reg = 0x%01x, txd_bit_ctr_reg = 0x%01x, txd_bitrate_ctr_reg = 0x%02x, tx_data_available = 0x%01x, etx_ctrl_reg = 0x%02x", 
+      $display("txd = 0x%01x, txd_reg = 0x%01x, txd_byte_reg = 0x%01x, txd_bit_ctr_reg = 0x%01x, txd_bitrate_ctr_reg = 0x%02x, etx_ctrl_reg = 0x%02x", 
                dut.txd, dut.txd_reg, dut.txd_byte_reg, dut.txd_bit_ctr_reg, 
-               dut.txd_bitrate_ctr_reg, dut.tx_data_available, dut.etx_ctrl_reg);
+               dut.txd_bitrate_ctr_reg, dut.etx_ctrl_reg);
     end
   endtask // dump_dut_state
 

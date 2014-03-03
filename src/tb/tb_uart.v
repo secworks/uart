@@ -46,7 +46,7 @@ module tb_uart();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG           = 1;
+  parameter DEBUG           = 0;
   parameter VERBOSE         = 0;
 
   parameter CLK_HALF_PERIOD = 1;
@@ -74,6 +74,8 @@ module tb_uart();
   wire         tb_txd_ack;
 
   wire [7 : 0] tb_debug;
+
+  reg          txd_state;
   
 
   //----------------------------------------------------------------
@@ -143,10 +145,20 @@ module tb_uart();
   //
   // Observes what happens on the dut tx port and reports it.
   //----------------------------------------------------------------
-//  always @*
-//    begin : tx_monitor
-//    end
-//   
+  always @*
+    begin : tx_monitor
+      if ((!tb_txd) && txd_state)
+        begin
+          $display("txd going low.");
+          txd_state = 0;
+        end
+
+      if (tb_txd && (!txd_state))
+        begin
+          $display("txd going high");
+          txd_state = 1;
+        end
+    end
     
   
   //----------------------------------------------------------------
@@ -233,14 +245,15 @@ module tb_uart();
   //----------------------------------------------------------------
   task init_sim();
     begin
-      cycle_ctr = 0;
-      error_ctr = 0;
-      tc_ctr    = 0;
+      cycle_ctr  = 0;
+      error_ctr  = 0;
+      tc_ctr     = 0;
       
-      tb_clk = 0;
+      tb_clk     = 0;
       tb_reset_n = 1;
 
-      tb_rxd = 1;
+      tb_rxd     = 1;
+      txd_state  = 1;
     end
   endtask // init_sim
 

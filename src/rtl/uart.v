@@ -270,6 +270,57 @@ module uart(
     end // rxd_bitrate_ctr
 
 
+
+  //----------------------------------------------------------------
+  // txd_bit_ctr
+  //
+  // Bit counter for transmitting data on the external 
+  // serial interface.
+  //----------------------------------------------------------------
+  always @*
+    begin: txd_bit_ctr
+      txd_bit_ctr_new = 4'h0;
+      txd_bit_ctr_we  = 0;
+
+      if (txd_bit_ctr_rst)
+        begin
+          txd_bit_ctr_new = 4'h0;
+          txd_bit_ctr_we  = 1;
+        end
+
+      else if (txd_bit_ctr_inc)
+        begin
+          txd_bit_ctr_new = txd_bit_ctr_reg + 4'b0001;
+          txd_bit_ctr_we  = 1;
+        end
+    end // txd_bit_ctr
+
+
+  //----------------------------------------------------------------
+  // txd_bitrate_ctr
+  //
+  // Bitrate counter for transmitting data on the external 
+  // serial interface.
+  //----------------------------------------------------------------
+  always @*
+    begin: txd_bitrate_ctr
+      txd_bitrate_ctr_new = 16'h0000;
+      txd_bitrate_ctr_we  = 0;
+
+      if (txd_bitrate_ctr_rst)
+        begin
+          txd_bitrate_ctr_new = 16'h0000;
+          txd_bitrate_ctr_we  = 1;
+        end
+
+      else if (txd_bitrate_ctr_inc)
+        begin
+          txd_bitrate_ctr_new = txd_bitrate_ctr_reg + 16'h0001;
+          txd_bitrate_ctr_we  = 1;
+        end
+    end // txd_bitrate_ctr
+  
+
   //----------------------------------------------------------------
   // external_rx_engine
   //

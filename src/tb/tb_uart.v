@@ -99,7 +99,9 @@ module tb_uart();
       #(CLK_PERIOD);
       if (DEBUG)
         begin
+          dump_rx_state();
           dump_tx_state();
+          $display("");
         end
     end
 
@@ -205,7 +207,7 @@ module tb_uart();
   //
   // Transmit a byte of data to the DUT receive port.
   //----------------------------------------------------------------
-  task transmit_byte(reg [7 : 0] data);
+  task transmit_byte(input [7 : 0] data);
     integer i;
     begin
       $display("*** Transmitting byte 0x%02x to the dut.", data);
@@ -240,7 +242,7 @@ module tb_uart();
   // Transmits a byte and checks that it was captured internally
   // by the dut.
   //----------------------------------------------------------------
-  task check_transmit(reg [7 : 0] data);
+  task check_transmit(input [7 : 0] data);
     begin
       tc_ctr = tc_ctr + 1;
 

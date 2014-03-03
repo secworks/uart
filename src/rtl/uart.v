@@ -71,7 +71,7 @@ module uart(
   parameter DEFAULT_HALF_CLK_RATE = DEFAULT_CLK_RATE / 2;
 
   parameter DEFAULT_DATA_BITS = 8;
-  parameter DEFAULT_STOP_BITS = 2;
+  parameter DEFAULT_STOP_BITS = 1;
   
   parameter ERX_IDLE  = 0; 
   parameter ERX_START = 1;
@@ -145,7 +145,7 @@ module uart(
   //----------------------------------------------------------------
   assign txd   = txd_reg;
 
-  assign debug = rxd_byte_reg;
+  assign debug = txd_byte_reg;
 
   
   //----------------------------------------------------------------
@@ -165,6 +165,7 @@ module uart(
           rxd_bitrate_ctr_reg <= 16'h0000;
 
           txd_reg             <= 1;
+          txd_byte_reg        <= 8'h00;
           txd_bit_ctr_reg     <= 4'h0;
           txd_bitrate_ctr_reg <= 16'h0000;
           
@@ -195,6 +196,11 @@ module uart(
           if (txd_we)
             begin
               txd_reg = txd_new;
+            end
+          
+          if (txd_byte_we)
+            begin
+              txd_byte_reg = txd_byte_new;
             end
 
           if (txd_bit_ctr_we)
@@ -337,7 +343,6 @@ module uart(
       rxd_bitrate_ctr_inc = 0;
       rxd_byte_we         = 0;
       tx_data_available   = 0;
-      
       erx_ctrl_new        = ERX_IDLE;
       erx_ctrl_we         = 0;
       
@@ -375,6 +380,7 @@ module uart(
                   end
               end
           end
+
         
         ERX_BITS:
           begin
@@ -395,6 +401,7 @@ module uart(
               end
           end
 
+        
         ERX_STOP:
           begin
             rxd_bitrate_ctr_inc = 1;
@@ -422,37 +429,83 @@ module uart(
   //----------------------------------------------------------------
   always @*
     begin: external_tx_engine
-      txd_new      = 0;
-      txd_we       = 0;
-      txd_byte_new = 0;
-      txd_byte_we  = 0;
-      etx_ctrl_new = ETX_IDLE;
-      etx_ctrl_we  = 1;
+      txd_new             = 0;
+      txd_we              = 0;
+      txd_byte_new        = 0;
+      txd_byte_we         = 0;
+      txd_bit_ctr_rst     = 0;
+      txd_bit_ctr_inc     = 0;
+      txd_bitrate_ctr_rst = 0;
+      txd_bitrate_ctr_inc = 0;
+      etx_ctrl_new        = ETX_IDLE;
+      etx_ctrl_we         = 0;
 
       case (etx_ctrl_reg)
         ETX_IDLE:
           begin
             if (tx_data_available)
               begin
-                txd_byte_new = ~rxd_byte_reg;
-                txd_byte_we  = 1;
-                etx_ctrl_new = ETX_START;
-                etx_ctrl_we  = 1;
+                txd_new             = 0;
+                txd_we              = 1;
+                txd_byte_new        = rxd_byte_reg;
+                txd_byte_we         = 1;
+                txd_bitrate_ctr_rst = 1;
+                etx_ctrl_new        = ETX_START;
+                etx_ctrl_we         = 1;
               end
           end
 
+        
         ETX_START:
           begin
-            txd_new = 0;
-            txd_we  = 1;
+            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE)
+              begin
+                txd_bit_ctr_rst     = 1;
+                etx_ctrl_new        = ETX_BITS;
+                etx_ctrl_we         = 1;
+              end
+            else
+              begin
+                txd_bitrate_ctr_inc = 1;
+              end
           end
 
+        
         ETX_BITS:
           begin
+            if (txd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
+              begin
+                txd_bitrate_ctr_inc = 1;
+              end
+            else
+              begin
+                txd_bitrate_ctr_rst = 1;
+                
+                if (txd_bit_ctr_reg == DEFAULT_DATA_BITS)
+                  begin
+                    txd_new      = 1;
+                    txd_we       = 1;
+                    etx_ctrl_new = ETX_STOP;
+                    etx_ctrl_we  = 1;
+                  end
+                else
+                  begin
+                    txd_new         = txd_byte_reg[txd_bit_ctr_reg];
+                    txd_we          = 1;
+                    txd_bit_ctr_inc = 1;
+                  end
+              end
           end
-
+        
+            
         ETX_STOP:
           begin
+            txd_bitrate_ctr_inc = 1;
+            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
+              begin
+                etx_ctrl_new = ETX_IDLE;
+                etx_ctrl_we  = 1;
+              end
           end
         
         default:

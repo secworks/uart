@@ -48,22 +48,22 @@
 //======================================================================
 
 module uart(
-            input wire          clk,
-            input wire          reset_n,
+            input wire           clk,
+            input wire           reset_n,
 
             // External interface.
-            input wire          rxd,
-            output wire         txd,
+            input wire           rxd,
+            output wire          txd,
 
             // Internal receive interface.
-            output wire         rxd_syn,
-            output [7 : 0]      rxd_data,
-            input wire          rxd_ack,
+            output wire          rxd_syn,
+            output [7 : 0]       rxd_data,
+            input wire           rxd_ack,
 
             // Internal transmit interface.
-            input wire          txd_syn,
-            input wire [7 : 0]  txd_data,
-            output wire         txd_ack,
+            input wire           txd_syn,
+            input wire [7 : 0]   txd_data,
+            output wire          txd_ack,
             
             // API interface.
             input wire           cs,
@@ -74,7 +74,7 @@ module uart(
             output wire          error,
 
             // Debug output.
-            output wire [7 : 0] debug
+            output wire [7 : 0]  debug
            );
 
   

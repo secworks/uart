@@ -172,23 +172,23 @@ module tb_uart();
       $display("------------");
       $display("Inputs and outputs:");
       $display("rxd = 0x%01x, txd = 0x%01x,", 
-               dut.rxd, dut.txd);
+               dut.core.rxd, dut.core.txd);
       $display("");
 
       $display("Sample and data registers:");
       $display("rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x", 
-               dut.rxd_reg, dut.rxd_byte_reg);
+               dut.core.rxd_reg, dut.core.rxd_byte_reg);
       $display("");
 
       $display("Counters:");
       $display("rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x", 
-               dut.rxd_bit_ctr_reg, dut.rxd_bitrate_ctr_reg);
+               dut.core.rxd_bit_ctr_reg, dut.core.rxd_bitrate_ctr_reg);
       $display("");
       
 
       $display("Control signals and FSM state:");
       $display("erx_ctrl_reg = 0x%02x", 
-               dut.erx_ctrl_reg);
+               dut.core.erx_ctrl_reg);
       $display("");
     end
   endtask // dump_dut_state
@@ -203,8 +203,8 @@ module tb_uart();
   task dump_rx_state();
     begin
       $display("rxd = 0x%01x, rxd_reg = 0x%01x, rxd_byte_reg = 0x%01x, rxd_bit_ctr_reg = 0x%01x, rxd_bitrate_ctr_reg = 0x%02x, rxd_syn = 0x%01x, erx_ctrl_reg = 0x%02x", 
-               dut.rxd, dut.rxd_reg, dut.rxd_byte_reg, dut.rxd_bit_ctr_reg, 
-               dut.rxd_bitrate_ctr_reg, dut.rxd_syn, dut.erx_ctrl_reg);
+               dut.core.rxd, dut.core.rxd_reg, dut.core.rxd_byte_reg, dut.core.rxd_bit_ctr_reg, 
+               dut.core.rxd_bitrate_ctr_reg, dut.core.rxd_syn, dut.core.erx_ctrl_reg);
     end
   endtask // dump_dut_state
   
@@ -218,8 +218,8 @@ module tb_uart();
   task dump_tx_state();
     begin
       $display("txd = 0x%01x, txd_reg = 0x%01x, txd_byte_reg = 0x%01x, txd_bit_ctr_reg = 0x%01x, txd_bitrate_ctr_reg = 0x%02x, txd_ack = 0x%01x, etx_ctrl_reg = 0x%02x", 
-               dut.txd, dut.txd_reg, dut.txd_byte_reg, dut.txd_bit_ctr_reg, 
-               dut.txd_bitrate_ctr_reg, dut.txd_ack, dut.etx_ctrl_reg);
+               dut.core.txd, dut.core.txd_reg, dut.core.txd_byte_reg, dut.core.txd_bit_ctr_reg, 
+               dut.core.txd_bitrate_ctr_reg, dut.core.txd_ack, dut.core.etx_ctrl_reg);
     end
   endtask // dump_dut_state
 
@@ -273,20 +273,20 @@ module tb_uart();
       // Start bit
       $display("*** Transmitting start bit.");
       tb_rxd = 0;
-      #(CLK_PERIOD * dut.DEFAULT_CLK_RATE);
+      #(CLK_PERIOD * dut.core.DEFAULT_CLK_RATE);
 
       // Send the bits LSB first.
       for (i = 0 ; i < 8 ; i = i + 1)
         begin
           $display("*** Transmitting data[%1d] = 0x%01x.", i, data[i]);
           tb_rxd = data[i];
-          #(CLK_PERIOD * dut.DEFAULT_CLK_RATE);
+          #(CLK_PERIOD * dut.core.DEFAULT_CLK_RATE);
         end
 
       // Send two stop bits. I.e. two bit times high (mark) value.
       $display("*** Transmitting two stop bits.");
       tb_rxd = 1;
-      #(2 * CLK_PERIOD * dut.DEFAULT_CLK_RATE * dut.DEFAULT_STOP_BITS);
+      #(2 * CLK_PERIOD * dut.core.DEFAULT_CLK_RATE * dut.core.DEFAULT_STOP_BITS);
       $display("*** End of transmission.");
     end
   endtask // transmit_byte
@@ -304,15 +304,15 @@ module tb_uart();
 
       transmit_byte(data);
       
-      if (dut.rxd_byte_reg == data)
+      if (dut.core.rxd_byte_reg == data)
         begin
           $display("*** Correct data: 0x%01x captured by the dut.", 
-                   dut.rxd_byte_reg);
+                   dut.core.rxd_byte_reg);
         end
       else
         begin
           $display("*** Incorrect data: 0x%01x captured by the dut Should be: 0x%01x.",
-                   dut.rxd_byte_reg, data);
+                   dut.core.rxd_byte_reg, data);
           error_ctr = error_ctr + 1;
         end
     end

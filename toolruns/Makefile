@@ -36,7 +36,7 @@
 #
 #===================================================================
 
-UART_SRC=../src/rtl/uart.v
+UART_SRC=../src/rtl/uart.v ../src/rtl/uart_core.v
 UART_TB_SRC=../src/tb/tb_uart.v
 
 CC=iverilog

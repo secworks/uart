@@ -2,6 +2,8 @@
 //
 // uart.v
 // ------
+// Top level wrapper for the uart core.
+//
 // A simple universal asynchronous receiver/transmitter (UART)
 // interface. The interface contains 16 byte wide transmit and 
 // receivea buffers and can handle start and stop bits. But in 
@@ -81,501 +83,53 @@ module uart(
 
   parameter DEFAULT_DATA_BITS = 8;
   parameter DEFAULT_STOP_BITS = 1;
-  
-  parameter ERX_IDLE  = 0; 
-  parameter ERX_START = 1;
-  parameter ERX_BITS  = 2;
-  parameter ERX_STOP  = 3;
-  parameter ERX_SYN   = 4;
-
-  parameter ETX_IDLE  = 0; 
-  parameter ETX_ACK   = 1;
-  parameter ETX_START = 2;
-  parameter ETX_BITS  = 3;
-  parameter ETX_STOP  = 4;
  
   
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg          rxd_reg;
-
-  reg [7 : 0]  rxd_byte_reg;
-  reg [7 : 0]  rxd_byte_new;
-  reg          rxd_byte_we;
-
-  reg [4 : 0]  rxd_bit_ctr_reg;
-  reg [4 : 0]  rxd_bit_ctr_new;
-  reg          rxd_bit_ctr_we;
-  reg          rxd_bit_ctr_rst;
-  reg          rxd_bit_ctr_inc;
-
-  reg [15 : 0] rxd_bitrate_ctr_reg;
-  reg [15 : 0] rxd_bitrate_ctr_new;
-  reg          rxd_bitrate_ctr_we;
-  reg          rxd_bitrate_ctr_rst;
-  reg          rxd_bitrate_ctr_inc;
-
-  reg          rxd_syn_reg;
-  reg          rxd_syn_new;
-  reg          rxd_syn_we;
-  
-  reg [2 : 0]  erx_ctrl_reg;
-  reg [2 : 0]  erx_ctrl_new;
-  reg          erx_ctrl_we;
-  
-  reg          txd_reg;
-  reg          txd_new;
-  reg          txd_we;
-  
-  reg [7 : 0]  txd_byte_reg;
-  reg [7 : 0]  txd_byte_new;
-  reg          txd_byte_we;
-
-  reg [4 : 0]  txd_bit_ctr_reg;
-  reg [4 : 0]  txd_bit_ctr_new;
-  reg          txd_bit_ctr_we;
-  reg          txd_bit_ctr_rst;
-  reg          txd_bit_ctr_inc;
-
-  reg [15 : 0] txd_bitrate_ctr_reg;
-  reg [15 : 0] txd_bitrate_ctr_new;
-  reg          txd_bitrate_ctr_we;
-  reg          txd_bitrate_ctr_rst;
-  reg          txd_bitrate_ctr_inc;
-
-  reg          txd_ack_reg;
-  reg          txd_ack_new;
-  reg          txd_ack_we;
-  
-  reg [2 : 0]  etx_ctrl_reg;
-  reg [2 : 0]  etx_ctrl_new;
-  reg          etx_ctrl_we;
 
   
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
+  wire [15 : 0] bit_rate;
+  wire [1 : 0]  stop_bits;
   
   
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign txd      = txd_reg;
-  assign rxd_syn  = rxd_syn_reg;
-  assign rxd_data = rxd_byte_reg;
-  assign txd_ack  = txd_ack_reg;
-  assign debug    = txd_byte_reg;
-  
-  
-  //----------------------------------------------------------------
-  // reg_update
-  //
-  // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset. All registers have write enable.
-  //----------------------------------------------------------------
-  always @ (posedge clk)
-    begin: reg_update
-      if (!reset_n)
-        begin
-          rxd_reg             <= 0;
-          rxd_byte_reg        <= 8'h00;
-          rxd_bit_ctr_reg     <= 4'h0;
-          rxd_bitrate_ctr_reg <= 16'h0000;
-          rxd_syn_reg         <= 0;
-          erx_ctrl_reg        <= ERX_IDLE;
-          
-          txd_reg             <= 1;
-          txd_byte_reg        <= 8'h00;
-          txd_bit_ctr_reg     <= 4'h0;
-          txd_bitrate_ctr_reg <= 16'h0000;
-          txd_ack_reg         <= 0;
-          etx_ctrl_reg        <= ETX_IDLE;
-        end
-      else
-        begin
-          // We sample the rx input port every cycle.
-          rxd_reg <= rxd;
-
-          // We shift the rxd bit into msb.
-          if (rxd_byte_we)
-            begin
-              rxd_byte_reg <= {rxd_reg, rxd_byte_reg[7 : 1]};
-            end
-
-          if (rxd_bit_ctr_we)
-            begin
-              rxd_bit_ctr_reg <= rxd_bit_ctr_new;
-            end
-
-          if (rxd_bitrate_ctr_we)
-            begin
-              rxd_bitrate_ctr_reg <= rxd_bitrate_ctr_new;
-            end
-          
-          if (rxd_syn_we)
-            begin
-              rxd_syn_reg = rxd_syn_new;
-            end
-          
-          if (erx_ctrl_we)
-            begin
-              erx_ctrl_reg <= erx_ctrl_new;
-            end
-          
-          if (txd_we)
-            begin
-              txd_reg = txd_new;
-            end
-          
-          if (txd_byte_we)
-            begin
-              txd_byte_reg = txd_byte_new;
-            end
-
-          if (txd_bit_ctr_we)
-            begin
-              txd_bit_ctr_reg <= txd_bit_ctr_new;
-            end
-
-          if (txd_bitrate_ctr_we)
-            begin
-              txd_bitrate_ctr_reg <= txd_bitrate_ctr_new;
-            end
-          
-          if (txd_ack_we)
-            begin
-              txd_ack_reg = txd_ack_new;
-            end
-          
-          if (etx_ctrl_we)
-            begin
-              etx_ctrl_reg <= etx_ctrl_new;
-            end
-        end
-    end // reg_update
-
-
-  //----------------------------------------------------------------
-  // rxd_bit_ctr
-  //
-  // Bit counter for receiving data on the external 
-  // serial interface.
-  //----------------------------------------------------------------
-  always @*
-    begin: rxd_bit_ctr
-      rxd_bit_ctr_new = 4'h0;
-      rxd_bit_ctr_we  = 0;
-
-      if (rxd_bit_ctr_rst)
-        begin
-          rxd_bit_ctr_new = 4'h0;
-          rxd_bit_ctr_we  = 1;
-        end
-
-      else if (rxd_bit_ctr_inc)
-        begin
-          rxd_bit_ctr_new = rxd_bit_ctr_reg + 4'b0001;
-          rxd_bit_ctr_we  = 1;
-        end
-    end // rxd_bit_ctr
-
-
-  //----------------------------------------------------------------
-  // rxd_bitrate_ctr
-  //
-  // Bitrate counter for receiving data on the external 
-  // serial interface.
-  //----------------------------------------------------------------
-  always @*
-    begin: rxd_bitrate_ctr
-      rxd_bitrate_ctr_new = 16'h0000;
-      rxd_bitrate_ctr_we  = 0;
-
-      if (rxd_bitrate_ctr_rst)
-        begin
-          rxd_bitrate_ctr_new = 16'h0000;
-          rxd_bitrate_ctr_we  = 1;
-        end
-
-      else if (rxd_bitrate_ctr_inc)
-        begin
-          rxd_bitrate_ctr_new = rxd_bitrate_ctr_reg + 16'h0001;
-          rxd_bitrate_ctr_we  = 1;
-        end
-    end // rxd_bitrate_ctr
-
-
-
-  //----------------------------------------------------------------
-  // txd_bit_ctr
-  //
-  // Bit counter for transmitting data on the external 
-  // serial interface.
-  //----------------------------------------------------------------
-  always @*
-    begin: txd_bit_ctr
-      txd_bit_ctr_new = 4'h0;
-      txd_bit_ctr_we  = 0;
-
-      if (txd_bit_ctr_rst)
-        begin
-          txd_bit_ctr_new = 4'h0;
-          txd_bit_ctr_we  = 1;
-        end
-
-      else if (txd_bit_ctr_inc)
-        begin
-          txd_bit_ctr_new = txd_bit_ctr_reg + 4'b0001;
-          txd_bit_ctr_we  = 1;
-        end
-    end // txd_bit_ctr
-
-
-  //----------------------------------------------------------------
-  // txd_bitrate_ctr
-  //
-  // Bitrate counter for transmitting data on the external 
-  // serial interface.
-  //----------------------------------------------------------------
-  always @*
-    begin: txd_bitrate_ctr
-      txd_bitrate_ctr_new = 16'h0000;
-      txd_bitrate_ctr_we  = 0;
-
-      if (txd_bitrate_ctr_rst)
-        begin
-          txd_bitrate_ctr_new = 16'h0000;
-          txd_bitrate_ctr_we  = 1;
-        end
-
-      else if (txd_bitrate_ctr_inc)
-        begin
-          txd_bitrate_ctr_new = txd_bitrate_ctr_reg + 16'h0001;
-          txd_bitrate_ctr_we  = 1;
-        end
-    end // txd_bitrate_ctr
+  assign debug    = rxd_data;
   
 
   //----------------------------------------------------------------
-  // external_rx_engine
+  // core
   //
-  // Logic that implements the receive engine towards 
-  // the external interface. Detects incoming data, collects it, 
-  // if required checks parity and store correct data into 
-  // the rx buffer.
+  // Instantiation of the uart core.
   //----------------------------------------------------------------
-  always @*
-    begin: external_rx_engine
-      rxd_bit_ctr_rst     = 0;
-      rxd_bit_ctr_inc     = 0;
-      rxd_bitrate_ctr_rst = 0;
-      rxd_bitrate_ctr_inc = 0;
-      rxd_byte_we         = 0;
-      rxd_syn_new         = 0;
-      rxd_syn_we          = 0;
-      erx_ctrl_new        = ERX_IDLE;
-      erx_ctrl_we         = 0;
-      
-      case (erx_ctrl_reg)
-        ERX_IDLE:
-          begin
-            if (!rxd_reg)
-              begin
-                // Possible start bit detected.
-                rxd_bitrate_ctr_rst = 1;
-                erx_ctrl_new        = ERX_START;
-                erx_ctrl_we         = 1;
-              end
-          end
+  uart_core core(
+                 .clk(clk),
+                 .reset_n(reset_n),
 
+                 // Configuration parameters
+                 .bit_rate(bit_rate),
+                 .stop_bits(stop_bits),
+                 
+                 // External data interface
+                 .rxd(rxd),
+                 .txd(txd),
 
-        ERX_START:
-          begin
-            rxd_bitrate_ctr_inc = 1;
-            if (rxd_reg)
-              begin
-                // Just a glitch.
-                erx_ctrl_new = ERX_IDLE;
-                erx_ctrl_we  = 1;
-              end
-            else
-              begin
-                if (rxd_bitrate_ctr_reg == DEFAULT_HALF_CLK_RATE)
-                  begin
-                    // start bit assumed. We start sampling data.
-                    rxd_bit_ctr_rst     = 1;
-                    rxd_bitrate_ctr_rst = 1;
-                    erx_ctrl_new        = ERX_BITS;
-                    erx_ctrl_we         = 1;
-                  end
-              end
-          end
-
-        
-        ERX_BITS:
-          begin
-            if (rxd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
-              begin
-                rxd_bitrate_ctr_inc = 1;
-              end
-            else
-              begin
-                rxd_byte_we         = 1;
-                rxd_bit_ctr_inc     = 1;
-                rxd_bitrate_ctr_rst = 1;
-                if (rxd_bit_ctr_reg == DEFAULT_DATA_BITS - 1)
-                  begin
-                    erx_ctrl_new = ERX_STOP;
-                    erx_ctrl_we  = 1;
-                  end
-              end
-          end
-
-        
-        ERX_STOP:
-          begin
-            rxd_bitrate_ctr_inc = 1;
-            if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
-              begin
-                rxd_syn_new  = 1;
-                rxd_syn_we   = 1;
-                erx_ctrl_new = ERX_SYN;
-                erx_ctrl_we  = 1;
-              end
-          end
-
-        
-        ERX_SYN:
-          begin
-            if (txd_ack)
-              begin
-                rxd_syn_new  = 0;
-                rxd_syn_we   = 1;
-                erx_ctrl_new = ERX_IDLE;
-                erx_ctrl_we  = 1;
-              end
-          end
-
-        
-        default:
-          begin
-
-          end
-      endcase // case (erx_ctrl_reg)
-    end // external_rx_engine
-
-
-  //----------------------------------------------------------------
-  // external_tx_engine
-  //
-  // Logic that implements the transmit engine towards 
-  // the external interface.
-  //----------------------------------------------------------------
-  always @*
-    begin: external_tx_engine
-      txd_new             = 0;
-      txd_we              = 0;
-      txd_byte_new        = 0;
-      txd_byte_we         = 0;
-      txd_bit_ctr_rst     = 0;
-      txd_bit_ctr_inc     = 0;
-      txd_bitrate_ctr_rst = 0;
-      txd_bitrate_ctr_inc = 0;
-      txd_ack_new         = 0;
-      txd_ack_we          = 0;
-      etx_ctrl_new        = ETX_IDLE;
-      etx_ctrl_we         = 0;
-
-      case (etx_ctrl_reg)
-        ETX_IDLE:
-          begin
-            if (txd_syn)
-              begin
-                txd_new             = 0;
-                txd_we              = 1;
-                txd_byte_new        = txd_data;
-                txd_byte_we         = 1;
-                txd_ack_new         = 1;
-                txd_ack_we          = 1;
-                txd_bitrate_ctr_rst = 1;
-                etx_ctrl_new        = ETX_ACK;
-                etx_ctrl_we         = 1;
-              end
-          end
-
-        
-        ETX_ACK:
-          begin
-            if (!txd_syn)
-              begin
-                txd_ack_new  = 0;
-                txd_ack_we   = 1;
-                etx_ctrl_new = ETX_START;
-                etx_ctrl_we  = 1;
-              end
-          end
-        
-        ETX_START:
-          begin
-            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE)
-              begin
-                txd_bit_ctr_rst     = 1;
-                etx_ctrl_new        = ETX_BITS;
-                etx_ctrl_we         = 1;
-              end
-            else
-              begin
-                txd_bitrate_ctr_inc = 1;
-              end
-          end
-
-        
-        ETX_BITS:
-          begin
-            if (txd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
-              begin
-                txd_bitrate_ctr_inc = 1;
-              end
-            else
-              begin
-                txd_bitrate_ctr_rst = 1;
-                
-                if (txd_bit_ctr_reg == DEFAULT_DATA_BITS)
-                  begin
-                    txd_new      = 1;
-                    txd_we       = 1;
-                    etx_ctrl_new = ETX_STOP;
-                    etx_ctrl_we  = 1;
-                  end
-                else
-                  begin
-                    txd_new         = txd_byte_reg[txd_bit_ctr_reg];
-                    txd_we          = 1;
-                    txd_bit_ctr_inc = 1;
-                  end
-              end
-          end
-        
-            
-        ETX_STOP:
-          begin
-            txd_bitrate_ctr_inc = 1;
-            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
-              begin
-                etx_ctrl_new = ETX_IDLE;
-                etx_ctrl_we  = 1;
-              end
-          end
-
-        
-        default:
-          begin
-
-          end
-      endcase // case (etx_ctrl_reg)
-    end // external_tx_engine
+                 // Internal receive interface.
+                 .rxd_syn(rxd_syn),
+                 .rxd_data(rxd_data),
+                 .rxd_ack(rxd_ack),
+                 
+                 // Internal transmit interface.
+                 .txd_syn(txd_syn),
+                 .txd_data(txd_data),
+                 .txd_ack(txd_ack)
+                );
   
 endmodule // uart
 

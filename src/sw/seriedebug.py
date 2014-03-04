@@ -59,15 +59,6 @@ def main():
 
     verbose = True
     
-    # Create a serial devce and configure it.
-    # Should be:
-    # 1200 Baud
-    # 1 start bit
-    # 8 data bits
-    # No parity bit
-    # 1 stop bits
-    # No RTS/CTS
-    # Note: You need to update to the correct device in your system.
     ser = serial.Serial()
     ser.port='/dev/cu.usbserial-A801SA6T'
     ser.baudrate=9600

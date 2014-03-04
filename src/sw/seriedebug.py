@@ -73,7 +73,7 @@ def main():
     ser.baudrate=9600
     ser.bytesize=8
     ser.parity='N'
-    ser.stopbits=2
+    ser.stopbits=1
     ser.timeout=1
     ser.writeTimeout=0
 

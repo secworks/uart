@@ -65,7 +65,7 @@ def main():
     # 1 start bit
     # 8 data bits
     # No parity bit
-    # 2 stop bits
+    # 1 stop bits
     # No RTS/CTS
     # Note: You need to update to the correct device in your system.
     ser = serial.Serial()

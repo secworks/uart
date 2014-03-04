@@ -51,7 +51,7 @@ module uart(
             input wire          clk,
             input wire          reset_n,
 
-            // External interface
+            // External interface.
             input wire          rxd,
             output wire         txd,
 
@@ -64,7 +64,16 @@ module uart(
             input wire          txd_syn,
             input wire [7 : 0]  txd_data,
             output wire         txd_ack,
+            
+            // API interface.
+            input wire           cs,
+            input wire           we,
+            input wire [3 : 0]   address,
+            input wire [31 : 0]  write_data,
+            output wire [31 : 0] read_data,
+            output wire          error,
 
+            // Debug output.
             output wire [7 : 0] debug
            );
 
@@ -72,6 +81,18 @@ module uart(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
+  // API addresses.
+  parameter ADDR_CORE_NAME0   = 4'h0;
+  parameter ADDR_CORE_NAME1   = 4'h1;
+  parameter ADDR_CORE_TYPE    = 4'h2;
+  parameter ADDR_CORE_VERSION = 4'h3;
+
+  // Core ID constants.
+  parameter CORE_NAME0   = 32'h75617274;  // "uart"
+  parameter CORE_NAME1   = 32'h20202020;  // "    "
+  parameter CORE_TYPE    = 32'h20202031;  // "   1"
+  parameter CORE_VERSION = 32'h302e3031;  // "0.01"
+
   // The default clock rate is based on target clock frequency
   // divided by the bit rate times in order to hit the
   // center of the bits. I.e.
@@ -107,19 +128,28 @@ module uart(
   wire [7 : 0] core_txd_data;
   wire         core_txd_ack;
 
+  reg [31 : 0] tmp_read_data;
+  reg          tmp_error;
+
   
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign txd      = core_txd;
-  assign core_rxd = rxd;
-  assign debug    = core_rxd_data;
+  assign txd           = core_txd;
+  assign core_rxd      = rxd;
 
-  // Temporary wiring to connect the internal ports of the core.
-  // ONLY for test purposes.
-  assign core_txd_syn  = core_rxd_syn;
-  assign core_txd_data = core_rxd_data;
-  assign core_rxd_ack  = core_txd_ack;
+  assign rxd_syn       = core_rxd_syn;
+  assign rxd_data      = core_rxd_data;
+  assign core_rxd_ack  = rxd_ack;
+  
+  assign core_txd_syn  = txd_syn;
+  assign core_txd_data = txd_data;
+  assign txd_ack       = core_txd_ack;
+  
+  assign read_data     = tmp_read_data;
+  assign error         = tmp_error;
+
+  assign debug         = core_rxd_data;
   
 
   //----------------------------------------------------------------
@@ -149,6 +179,85 @@ module uart(
                  .txd_data(core_txd_data),
                  .txd_ack(core_txd_ack)
                 );
+
+  
+  //----------------------------------------------------------------
+  // reg_update
+  //
+  // Update functionality for all registers in the core.
+  // All registers are positive edge triggered with synchronous
+  // active low reset. All registers have write enable.
+  //----------------------------------------------------------------
+  always @ (posedge clk)
+    begin: reg_update
+      if (!reset_n)
+        begin
+
+        end
+      else
+        begin
+
+        end
+    end // reg_update
+
+  
+  //----------------------------------------------------------------
+  // api
+  //
+  // The core API that allows an internal host to control the
+  // core functionality.
+  //----------------------------------------------------------------
+  always @*
+    begin: api
+      // Default assignments.
+      tmp_read_data = 32'h00000000;
+      tmp_error     = 0;
+      
+      if (cs)
+        begin
+          if (we)
+            begin
+              // Write operations.
+              case (address)
+                
+                default:
+                  begin
+                    tmp_error = 1;
+                  end
+              endcase // case (address)
+            end
+          else
+            begin
+              // Read operations.
+              case (address)
+                ADDR_CORE_NAME0:
+                  begin
+                    tmp_read_data = CORE_NAME0;
+                  end
+
+                ADDR_CORE_NAME1:
+                  begin
+                    tmp_read_data = CORE_NAME1;
+                  end
+
+                ADDR_CORE_TYPE:
+                  begin
+                    tmp_read_data = CORE_TYPE;
+                  end
+
+                ADDR_CORE_VERSION:
+                  begin
+                    tmp_read_data = CORE_VERSION;
+                  end
+                
+                default:
+                  begin
+                    tmp_error = 1;
+                  end
+              endcase // case (address)
+            end
+        end
+    end
   
 endmodule // uart
 

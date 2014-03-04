@@ -492,10 +492,10 @@ module uart_core(
       case (etx_ctrl_reg)
         ETX_IDLE:
           begin
+            txd_new = 1;
+            txd_we  = 1;
             if (txd_syn)
               begin
-                txd_new             = 0;
-                txd_we              = 1;
                 txd_byte_new        = txd_data;
                 txd_byte_we         = 1;
                 txd_ack_new         = 1;
@@ -511,6 +511,8 @@ module uart_core(
           begin
             if (!txd_syn)
               begin
+                txd_new      = 0;
+                txd_we       = 1;
                 txd_ack_new  = 0;
                 txd_ack_we   = 1;
                 etx_ctrl_new = ETX_START;

@@ -95,12 +95,31 @@ module uart(
   //----------------------------------------------------------------
   wire [15 : 0] bit_rate;
   wire [1 : 0]  stop_bits;
+
+  wire         core_rxd;
+  wire         core_txd;
   
+  wire         core_rxd_syn;
+  wire [7 : 0] core_rxd_data;
+  wire         core_rxd_ack;
+
+  wire         core_txd_syn;
+  wire [7 : 0] core_txd_data;
+  wire         core_txd_ack;
+
   
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign debug    = rxd_data;
+  assign txd      = core_txd;
+  assign core_rxd = rxd;
+  assign debug    = core_rxd_data;
+
+  // Temporary wiring to connect the internal ports of the core.
+  // ONLY for test purposes.
+  assign core_txd_syn  = core_rxd_syn;
+  assign core_txd_data = core_rxd_data;
+  assign core_rxd_ack  = core_txd_ack;
   
 
   //----------------------------------------------------------------
@@ -117,18 +136,18 @@ module uart(
                  .stop_bits(stop_bits),
                  
                  // External data interface
-                 .rxd(rxd),
-                 .txd(txd),
+                 .rxd(core_rxd),
+                 .txd(core_txd),
 
                  // Internal receive interface.
-                 .rxd_syn(rxd_syn),
-                 .rxd_data(rxd_data),
-                 .rxd_ack(rxd_ack),
+                 .rxd_syn(core_rxd_syn),
+                 .rxd_data(core_rxd_data),
+                 .rxd_ack(core_rxd_ack),
                  
                  // Internal transmit interface.
-                 .txd_syn(txd_syn),
-                 .txd_data(txd_data),
-                 .txd_ack(txd_ack)
+                 .txd_syn(core_txd_syn),
+                 .txd_data(core_txd_data),
+                 .txd_ack(core_txd_ack)
                 );
   
 endmodule // uart

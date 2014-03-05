@@ -103,7 +103,6 @@ module uart_core(
   reg          rxd_reg;
 
   reg [7 : 0]  rxd_byte_reg;
-  reg [7 : 0]  rxd_byte_new;
   reg          rxd_byte_we;
 
   reg [4 : 0]  rxd_bit_ctr_reg;

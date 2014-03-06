@@ -60,20 +60,23 @@ module tb_uart();
   reg [31 : 0] error_ctr;
   reg [31 : 0] tc_ctr;
 
-  reg          tb_clk;
-  reg          tb_reset_n;
-  reg          tb_rxd;
-  wire         tb_txd;
-
-  wire         tb_rxd_syn;
-  wire [7 : 0] tb_rxd_data;
-  wire         tb_rxd_ack;
-
-  wire         tb_txd_syn;
-  wire [7 : 0] tb_txd_data;
-  wire         tb_txd_ack;
-
-  wire [7 : 0] tb_debug;
+  reg           tb_clk;
+  reg           tb_reset_n;
+  reg           tb_rxd;
+  wire          tb_txd;
+  wire          tb_rxd_syn;
+  wire [7 : 0]  tb_rxd_data;
+  wire          tb_rxd_ack;
+  wire          tb_txd_syn;
+  wire [7 : 0]  tb_txd_data;
+  wire          tb_txd_ack;
+  reg           tb_cs;
+  reg           tb_we;
+  reg [3 : 0]   tb_address;
+  reg [31 : 0]  tb_write_data;
+  wire [31 : 0] tb_read_data;
+  wire          tb_error;
+  wire [7 : 0]  tb_debug;
 
   reg          txd_state;
   
@@ -95,15 +98,23 @@ module tb_uart();
            // Internal transmit interface.
            .txd_syn(tb_txd_syn),
            .txd_data(tb_txd_data),
-           .txd_ack(tb_tcd_ack),
+           .txd_ack(tb_txd_ack),
 
+            // API interface.
+            .cs(tb_cs),
+            .we(tb_we),
+            .address(tb_address),
+            .write_data(tb_write_data),
+            .read_data(tb_read_data),
+            .error(tb_error),
+           
            .debug(tb_debug)
           );
 
   //----------------------------------------------------------------
   // Concurrent assignments.
   //----------------------------------------------------------------
-  // We connect the so called internal ports on the dut together.
+  // We connect the internal facing ports on the dut together.
   assign tb_txd_syn  = tb_rxd_syn;
   assign tb_txd_data = tb_rxd_data;
   assign tb_rxd_ack  = tb_txd_ack;
@@ -245,15 +256,19 @@ module tb_uart();
   //----------------------------------------------------------------
   task init_sim();
     begin
-      cycle_ctr  = 0;
-      error_ctr  = 0;
-      tc_ctr     = 0;
+      cycle_ctr     = 0;
+      error_ctr     = 0;
+      tc_ctr        = 0;
       
-      tb_clk     = 0;
-      tb_reset_n = 1;
-
-      tb_rxd     = 1;
-      txd_state  = 1;
+      tb_clk        = 0;
+      tb_reset_n    = 1;
+      tb_rxd        = 1;
+      tb_cs         = 0;
+      tb_we         = 0;
+      tb_address    = 4'h0;
+      tb_write_data = 32'h00000000;
+      
+      txd_state     = 1;
     end
   endtask // init_sim
 

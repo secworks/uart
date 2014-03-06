@@ -449,7 +449,7 @@ module uart_core(
         
         ERX_SYN:
           begin
-            if (txd_ack)
+            if (rxd_ack)
               begin
                 rxd_syn_new  = 0;
                 rxd_syn_we   = 1;

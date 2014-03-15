@@ -72,7 +72,7 @@ module tb_uart();
   wire          tb_txd_ack;
   reg           tb_cs;
   reg           tb_we;
-  reg [3 : 0]   tb_address;
+  reg [7 : 0]   tb_address;
   reg [31 : 0]  tb_write_data;
   wire [31 : 0] tb_read_data;
   wire          tb_error;
@@ -265,7 +265,7 @@ module tb_uart();
       tb_rxd        = 1;
       tb_cs         = 0;
       tb_we         = 0;
-      tb_address    = 4'h0;
+      tb_address    = 8'h00;
       tb_write_data = 32'h00000000;
       
       txd_state     = 1;

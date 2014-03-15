@@ -174,8 +174,9 @@ module uart(
                  .reset_n(reset_n),
 
                  // Configuration parameters
-                 .bit_rate(bit_rate),
-                 .stop_bits(stop_bits),
+                 .bit_rate(bit_rate_reg),
+                 .data_bits(data_bits_reg),
+                 .stop_bits(stop_bits_reg),
                  
                  // External data interface
                  .rxd(core_rxd),

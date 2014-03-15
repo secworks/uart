@@ -51,6 +51,7 @@ module uart_core(
 
                  // Configuration parameters
                  input wire [15 : 0] bit_rate,
+                 input wire [3 : 0]  data_bits,
                  input wire [1 : 0]  stop_bits,
                  
                  // External data interface

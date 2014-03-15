@@ -68,7 +68,7 @@ module uart(
             // API interface.
             input wire           cs,
             input wire           we,
-            input wire [3 : 0]   address,
+            input wire [7 : 0]   address,
             input wire [31 : 0]  write_data,
             output wire [31 : 0] read_data,
             output wire          error,
@@ -82,26 +82,27 @@ module uart(
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
   // API addresses.
-  parameter ADDR_CORE_NAME0   = 4'h0;
-  parameter ADDR_CORE_NAME1   = 4'h1;
-  parameter ADDR_CORE_TYPE    = 4'h2;
-  parameter ADDR_CORE_VERSION = 4'h3;
+  parameter ADDR_CORE_NAME0   = 8'h00;
+  parameter ADDR_CORE_NAME1   = 8'h01;
+  parameter ADDR_CORE_TYPE    = 8'h02;
+  parameter ADDR_CORE_VERSION = 8'h03;
 
+  parameter ADDR_BIT_RATE     = 8'h10;
+  parameter ADDR_DATA_BITS    = 8'h11;
+  parameter ADDR_STOP_BITS    = 8'h12;
+  
   // Core ID constants.
   parameter CORE_NAME0   = 32'h75617274;  // "uart"
   parameter CORE_NAME1   = 32'h20202020;  // "    "
   parameter CORE_TYPE    = 32'h20202031;  // "   1"
   parameter CORE_VERSION = 32'h302e3031;  // "0.01"
 
-  // The default clock rate is based on target clock frequency
+  // The default bit rate is based on target clock frequency
   // divided by the bit rate times in order to hit the
   // center of the bits. I.e.
-  // Clock: 50 MHz
-  // Bitrate: 19200 bps
+  // Clock: 50 MHz, 9600 bps
   // Divisor = 50*10E6 / 9600 = 5208
-  parameter DEFAULT_CLK_RATE      = 5208;
-  parameter DEFAULT_HALF_CLK_RATE = DEFAULT_CLK_RATE / 2;
-
+  parameter DEFAULT_BIT_RATE  = 5208;
   parameter DEFAULT_DATA_BITS = 8;
   parameter DEFAULT_STOP_BITS = 1;
  
@@ -109,7 +110,18 @@ module uart(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
+  reg [15 : 0] bit_rate_reg;
+  reg [15 : 0] bit_rate_new;
+  reg          bit_rate_we;
 
+  reg [3 : 0]  data_bits_reg;
+  reg [3 : 0]  data_bits_new;
+  reg          data_bits_we;
+
+  reg [1 : 0]  stop_bits_reg;
+  reg [1 : 0]  stop_bits_new;
+  reg          stop_bits_we;
+  
   
   //----------------------------------------------------------------
   // Wires.
@@ -117,19 +129,19 @@ module uart(
   wire [15 : 0] bit_rate;
   wire [1 : 0]  stop_bits;
 
-  wire         core_rxd;
-  wire         core_txd;
+  wire          core_rxd;
+  wire          core_txd;
   
-  wire         core_rxd_syn;
-  wire [7 : 0] core_rxd_data;
-  wire         core_rxd_ack;
+  wire          core_rxd_syn;
+  wire [7 : 0]  core_rxd_data;
+  wire          core_rxd_ack;
 
-  wire         core_txd_syn;
-  wire [7 : 0] core_txd_data;
-  wire         core_txd_ack;
+  wire          core_txd_syn;
+  wire [7 : 0]  core_txd_data;
+  wire          core_txd_ack;
 
-  reg [31 : 0] tmp_read_data;
-  reg          tmp_error;
+  reg [31 : 0]  tmp_read_data;
+  reg           tmp_error;
 
   
   //----------------------------------------------------------------
@@ -192,10 +204,26 @@ module uart(
     begin: reg_update
       if (!reset_n)
         begin
-
+          bit_rate_reg  <= DEFAULT_BIT_RATE;
+          data_bits_reg <= DEFAULT_DATA_BITS;
+          stop_bits_reg <= DEFAULT_STOP_BITS;
         end
       else
         begin
+          if (bit_rate_we)
+            begin
+              bit_rate_reg  <= bit_rate_new;
+            end
+          
+          if (data_bits_we)
+            begin
+              data_bits_reg  <= data_bits_new;
+            end
+          
+          if (stop_bits_we)
+            begin
+              stop_bits_reg  <= stop_bits_new;
+            end
 
         end
     end // reg_update
@@ -210,6 +238,12 @@ module uart(
   always @*
     begin: api
       // Default assignments.
+      bit_rate_new  = 16'h0000;
+      bit_rate_we   = 0;
+      data_bits_new = 4'h0;
+      data_bits_we  = 0;
+      stop_bits_new = 2'b00;
+      stop_bits_we  = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
       
@@ -219,6 +253,23 @@ module uart(
             begin
               // Write operations.
               case (address)
+                ADDR_BIT_RATE:
+                  begin
+                    bit_rate_new = write_data[15 : 0];
+                    bit_rate_we  = 1;
+                  end
+
+                ADDR_DATA_BITS:
+                  begin
+                    data_bits_new = write_data[3 : 0];
+                    data_bits_we  = 1;
+                  end
+
+                ADDR_STOP_BITS:
+                  begin
+                    stop_bits_new = write_data[1 : 0];
+                    stop_bits_we  = 1;
+                  end
                 
                 default:
                   begin
@@ -248,6 +299,21 @@ module uart(
                 ADDR_CORE_VERSION:
                   begin
                     tmp_read_data = CORE_VERSION;
+                  end
+                
+                ADDR_BIT_RATE:
+                  begin
+                    tmp_read_data = {16'h0000, bit_rate_reg};
+                  end
+
+                ADDR_DATA_BITS:
+                  begin
+                    tmp_read_data = {28'h0000000, data_bits_reg};
+                  end
+
+                ADDR_STOP_BITS:
+                  begin
+                    tmp_read_data = {30'h0000000, stop_bits_reg};
                   end
                 
                 default:

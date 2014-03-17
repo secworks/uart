@@ -102,9 +102,9 @@ module uart(
   // center of the bits. I.e.
   // Clock: 50 MHz, 9600 bps
   // Divisor = 50*10E6 / 9600 = 5208
-  parameter DEFAULT_BIT_RATE  = 5208;
-  parameter DEFAULT_DATA_BITS = 8;
-  parameter DEFAULT_STOP_BITS = 1;
+  parameter DEFAULT_BIT_RATE  = 16'd5208;
+  parameter DEFAULT_DATA_BITS = 4'h8;
+  parameter DEFAULT_STOP_BITS = 2'h1;
  
   
   //----------------------------------------------------------------

@@ -217,7 +217,7 @@ module uart_core(
           
           if (rxd_syn_we)
             begin
-              rxd_syn_reg = rxd_syn_new;
+              rxd_syn_reg <= rxd_syn_new;
             end
           
           if (erx_ctrl_we)
@@ -227,12 +227,12 @@ module uart_core(
           
           if (txd_we)
             begin
-              txd_reg = txd_new;
+              txd_reg <= txd_new;
             end
           
           if (txd_byte_we)
             begin
-              txd_byte_reg = txd_byte_new;
+              txd_byte_reg <= txd_byte_new;
             end
 
           if (txd_bit_ctr_we)
@@ -247,7 +247,7 @@ module uart_core(
           
           if (txd_ack_we)
             begin
-              txd_ack_reg = txd_ack_new;
+              txd_ack_reg <= txd_ack_new;
             end
           
           if (etx_ctrl_we)

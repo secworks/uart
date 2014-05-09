@@ -288,20 +288,20 @@ module tb_uart();
       // Start bit
       $display("*** Transmitting start bit.");
       tb_rxd = 0;
-      #(CLK_PERIOD * dut.core.DEFAULT_CLK_RATE);
+      #(CLK_PERIOD * dut.DEFAULT_BIT_RATE);
 
       // Send the bits LSB first.
       for (i = 0 ; i < 8 ; i = i + 1)
         begin
           $display("*** Transmitting data[%1d] = 0x%01x.", i, data[i]);
           tb_rxd = data[i];
-          #(CLK_PERIOD * dut.core.DEFAULT_CLK_RATE);
+          #(CLK_PERIOD * dut.DEFAULT_BIT_RATE);
         end
 
       // Send two stop bits. I.e. two bit times high (mark) value.
       $display("*** Transmitting two stop bits.");
       tb_rxd = 1;
-      #(2 * CLK_PERIOD * dut.core.DEFAULT_CLK_RATE * dut.core.DEFAULT_STOP_BITS);
+      #(2 * CLK_PERIOD * dut.DEFAULT_BIT_RATE * dut.DEFAULT_STOP_BITS);
       $display("*** End of transmission.");
     end
   endtask // transmit_byte

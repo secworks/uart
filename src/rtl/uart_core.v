@@ -73,18 +73,6 @@ module uart_core(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  // The default clock rate is based on target clock frequency
-  // divided by the bit rate times in order to hit the
-  // center of the bits. I.e.
-  // Clock: 50 MHz
-  // Bitrate: 19200 bps
-  // Divisor = 50*10E6 / 9600 = 5208
-  parameter DEFAULT_CLK_RATE      = 5208;
-  parameter DEFAULT_HALF_CLK_RATE = DEFAULT_CLK_RATE / 2;
-
-  parameter DEFAULT_DATA_BITS = 8;
-  parameter DEFAULT_STOP_BITS = 1;
-  
   parameter ERX_IDLE  = 0; 
   parameter ERX_START = 1;
   parameter ERX_BITS  = 2;
@@ -158,6 +146,7 @@ module uart_core(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
+  wire [15 : 0] half_bit_rate;
   
   
   //----------------------------------------------------------------
@@ -167,6 +156,8 @@ module uart_core(
   assign rxd_syn  = rxd_syn_reg;
   assign rxd_data = rxd_byte_reg;
   assign txd_ack  = txd_ack_reg;
+
+  assign half_bit_rate = {1'b0, bit_rate[15 : 1]};
   
   
   //----------------------------------------------------------------
@@ -403,7 +394,7 @@ module uart_core(
               end
             else
               begin
-                if (rxd_bitrate_ctr_reg == DEFAULT_HALF_CLK_RATE)
+                if (rxd_bitrate_ctr_reg == half_bit_rate)
                   begin
                     // start bit assumed. We start sampling data.
                     rxd_bit_ctr_rst     = 1;
@@ -417,7 +408,7 @@ module uart_core(
         
         ERX_BITS:
           begin
-            if (rxd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
+            if (rxd_bitrate_ctr_reg < bit_rate)
               begin
                 rxd_bitrate_ctr_inc = 1;
               end
@@ -426,7 +417,7 @@ module uart_core(
                 rxd_byte_we         = 1;
                 rxd_bit_ctr_inc     = 1;
                 rxd_bitrate_ctr_rst = 1;
-                if (rxd_bit_ctr_reg == DEFAULT_DATA_BITS - 1)
+                if (rxd_bit_ctr_reg == data_bits - 1)
                   begin
                     erx_ctrl_new = ERX_STOP;
                     erx_ctrl_we  = 1;
@@ -438,7 +429,7 @@ module uart_core(
         ERX_STOP:
           begin
             rxd_bitrate_ctr_inc = 1;
-            if (rxd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
+            if (rxd_bitrate_ctr_reg == bit_rate * stop_bits)
               begin
                 rxd_syn_new  = 1;
                 rxd_syn_we   = 1;
@@ -522,7 +513,7 @@ module uart_core(
         
         ETX_START:
           begin
-            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE)
+            if (txd_bitrate_ctr_reg == bit_rate)
               begin
                 txd_bit_ctr_rst     = 1;
                 etx_ctrl_new        = ETX_BITS;
@@ -537,7 +528,7 @@ module uart_core(
         
         ETX_BITS:
           begin
-            if (txd_bitrate_ctr_reg < DEFAULT_CLK_RATE)
+            if (txd_bitrate_ctr_reg < bit_rate)
               begin
                 txd_bitrate_ctr_inc = 1;
               end
@@ -545,7 +536,7 @@ module uart_core(
               begin
                 txd_bitrate_ctr_rst = 1;
                 
-                if (txd_bit_ctr_reg == DEFAULT_DATA_BITS)
+                if (txd_bit_ctr_reg == data_bits)
                   begin
                     txd_new      = 1;
                     txd_we       = 1;
@@ -565,7 +556,7 @@ module uart_core(
         ETX_STOP:
           begin
             txd_bitrate_ctr_inc = 1;
-            if (txd_bitrate_ctr_reg == DEFAULT_CLK_RATE * DEFAULT_STOP_BITS)
+            if (txd_bitrate_ctr_reg == bit_rate * stop_bits)
               begin
                 etx_ctrl_new = ETX_IDLE;
                 etx_ctrl_we  = 1;

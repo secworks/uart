@@ -5,9 +5,9 @@
 // Top level wrapper for the uart core.
 //
 // A simple universal asynchronous receiver/transmitter (UART)
-// interface. The interface contains 16 byte wide transmit and 
-// receivea buffers and can handle start and stop bits. But in 
-// general is rather simple. The primary purpose is as host 
+// interface. The interface contains 16 byte wide transmit and
+// receivea buffers and can handle start and stop bits. But in
+// general is rather simple. The primary purpose is as host
 // interface for the coretest design. The core also has a
 // loopback mode to allow testing of a serial link.
 //
@@ -19,30 +19,30 @@
 //
 // Author: Joachim Strombergson
 // Copyright (c) 2014, Secworks Sweden AB
-// 
-// Redistribution and use in source and binary forms, with or 
-// without modification, are permitted provided that the following 
-// conditions are met: 
-// 
-// 1. Redistributions of source code must retain the above copyright 
-//    notice, this list of conditions and the following disclaimer. 
-// 
-// 2. Redistributions in binary form must reproduce the above copyright 
-//    notice, this list of conditions and the following disclaimer in 
-//    the documentation and/or other materials provided with the 
-//    distribution. 
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+//
+// Redistribution and use in source and binary forms, with or
+// without modification, are permitted provided that the following
+// conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in
+//    the documentation and/or other materials provided with the
+//    distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 // BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //======================================================================
@@ -64,7 +64,7 @@ module uart(
             input wire           txd_syn,
             input wire [7 : 0]   txd_data,
             output wire          txd_ack,
-            
+
             // API interface.
             input wire           cs,
             input wire           we,
@@ -77,7 +77,7 @@ module uart(
             output wire [7 : 0]  debug
            );
 
-  
+
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
@@ -90,7 +90,7 @@ module uart(
   parameter ADDR_BIT_RATE     = 8'h10;
   parameter ADDR_DATA_BITS    = 8'h11;
   parameter ADDR_STOP_BITS    = 8'h12;
-  
+
   // Core ID constants.
   parameter CORE_NAME0   = 32'h75617274;  // "uart"
   parameter CORE_NAME1   = 32'h20202020;  // "    "
@@ -105,8 +105,8 @@ module uart(
   parameter DEFAULT_BIT_RATE  = 16'd5208;
   parameter DEFAULT_DATA_BITS = 4'h8;
   parameter DEFAULT_STOP_BITS = 2'h1;
- 
-  
+
+
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
@@ -121,8 +121,8 @@ module uart(
   reg [1 : 0]  stop_bits_reg;
   reg [1 : 0]  stop_bits_new;
   reg          stop_bits_we;
-  
-  
+
+
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
@@ -131,7 +131,7 @@ module uart(
 
   wire          core_rxd;
   wire          core_txd;
-  
+
   wire          core_rxd_syn;
   wire [7 : 0]  core_rxd_data;
   wire          core_rxd_ack;
@@ -143,7 +143,7 @@ module uart(
   reg [31 : 0]  tmp_read_data;
   reg           tmp_error;
 
-  
+
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
@@ -153,16 +153,16 @@ module uart(
   assign rxd_syn       = core_rxd_syn;
   assign rxd_data      = core_rxd_data;
   assign core_rxd_ack  = rxd_ack;
-  
+
   assign core_txd_syn  = txd_syn;
   assign core_txd_data = txd_data;
   assign txd_ack       = core_txd_ack;
-  
+
   assign read_data     = tmp_read_data;
   assign error         = tmp_error;
 
   assign debug         = core_rxd_data;
-  
+
 
   //----------------------------------------------------------------
   // core
@@ -177,7 +177,7 @@ module uart(
                  .bit_rate(bit_rate_reg),
                  .data_bits(data_bits_reg),
                  .stop_bits(stop_bits_reg),
-                 
+
                  // External data interface
                  .rxd(core_rxd),
                  .txd(core_txd),
@@ -186,22 +186,22 @@ module uart(
                  .rxd_syn(core_rxd_syn),
                  .rxd_data(core_rxd_data),
                  .rxd_ack(core_rxd_ack),
-                 
+
                  // Internal transmit interface.
                  .txd_syn(core_txd_syn),
                  .txd_data(core_txd_data),
                  .txd_ack(core_txd_ack)
                 );
 
-  
+
   //----------------------------------------------------------------
   // reg_update
   //
   // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset. All registers have write enable.
+  // All registers are positive edge triggered with asynchronous
+  // active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk)
+  always @ (posedge clk or negedge reset_n)
     begin: reg_update
       if (!reset_n)
         begin
@@ -215,12 +215,12 @@ module uart(
             begin
               bit_rate_reg  <= bit_rate_new;
             end
-          
+
           if (data_bits_we)
             begin
               data_bits_reg  <= data_bits_new;
             end
-          
+
           if (stop_bits_we)
             begin
               stop_bits_reg  <= stop_bits_new;
@@ -229,7 +229,7 @@ module uart(
         end
     end // reg_update
 
-  
+
   //----------------------------------------------------------------
   // api
   //
@@ -247,7 +247,7 @@ module uart(
       stop_bits_we  = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
-      
+
       if (cs)
         begin
           if (we)
@@ -271,7 +271,7 @@ module uart(
                     stop_bits_new = write_data[1 : 0];
                     stop_bits_we  = 1;
                   end
-                
+
                 default:
                   begin
                     tmp_error = 1;
@@ -301,7 +301,7 @@ module uart(
                   begin
                     tmp_read_data = CORE_VERSION;
                   end
-                
+
                 ADDR_BIT_RATE:
                   begin
                     tmp_read_data = {16'h0000, bit_rate_reg};
@@ -316,7 +316,7 @@ module uart(
                   begin
                     tmp_read_data = {30'h0000000, stop_bits_reg};
                   end
-                
+
                 default:
                   begin
                     tmp_error = 1;
@@ -325,7 +325,7 @@ module uart(
             end
         end
     end
-  
+
 endmodule // uart
 
 //======================================================================

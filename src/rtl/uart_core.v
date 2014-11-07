@@ -3,9 +3,9 @@
 // uart_core.v
 // -----------
 // A simple universal asynchronous receiver/transmitter (UART)
-// interface. The interface contains 16 byte wide transmit and 
-// receivea buffers and can handle start and stop bits. But in 
-// general is rather simple. The primary purpose is as host 
+// interface. The interface contains 16 byte wide transmit and
+// receivea buffers and can handle start and stop bits. But in
+// general is rather simple. The primary purpose is as host
 // interface for the coretest design. The core also has a
 // loopback mode to allow testing of a serial link.
 //
@@ -16,31 +16,31 @@
 //
 //
 // Author: Joachim Strombergson
-// Copyright (c) 2014  Secworks Sweden AB
-// 
-// Redistribution and use in source and binary forms, with or 
-// without modification, are permitted provided that the following 
-// conditions are met: 
-// 
-// 1. Redistributions of source code must retain the above copyright 
-//    notice, this list of conditions and the following disclaimer. 
-// 
-// 2. Redistributions in binary form must reproduce the above copyright 
-//    notice, this list of conditions and the following disclaimer in 
-//    the documentation and/or other materials provided with the 
-//    distribution. 
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+// Copyright (c) 2014, Secworks Sweden AB
+//
+// Redistribution and use in source and binary forms, with or
+// without modification, are permitted provided that the following
+// conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in
+//    the documentation and/or other materials provided with the
+//    distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 // BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //======================================================================
@@ -53,7 +53,7 @@ module uart_core(
                  input wire [15 : 0] bit_rate,
                  input wire [3 : 0]  data_bits,
                  input wire [1 : 0]  stop_bits,
-                 
+
                  // External data interface
                  input wire          rxd,
                  output wire         txd,
@@ -62,30 +62,30 @@ module uart_core(
                  output wire         rxd_syn,
                  output [7 : 0]      rxd_data,
                  input wire          rxd_ack,
-                 
+
                  // Internal transmit interface.
                  input wire          txd_syn,
                  input wire [7 : 0]  txd_data,
                  output wire         txd_ack
                 );
 
-  
+
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter ERX_IDLE  = 0; 
+  parameter ERX_IDLE  = 0;
   parameter ERX_START = 1;
   parameter ERX_BITS  = 2;
   parameter ERX_STOP  = 3;
   parameter ERX_SYN   = 4;
 
-  parameter ETX_IDLE  = 0; 
+  parameter ETX_IDLE  = 0;
   parameter ETX_ACK   = 1;
   parameter ETX_START = 2;
   parameter ETX_BITS  = 3;
   parameter ETX_STOP  = 4;
- 
-  
+
+
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
@@ -109,15 +109,15 @@ module uart_core(
   reg          rxd_syn_reg;
   reg          rxd_syn_new;
   reg          rxd_syn_we;
-  
+
   reg [2 : 0]  erx_ctrl_reg;
   reg [2 : 0]  erx_ctrl_new;
   reg          erx_ctrl_we;
-  
+
   reg          txd_reg;
   reg          txd_new;
   reg          txd_we;
-  
+
   reg [7 : 0]  txd_byte_reg;
   reg [7 : 0]  txd_byte_new;
   reg          txd_byte_we;
@@ -137,18 +137,18 @@ module uart_core(
   reg          txd_ack_reg;
   reg          txd_ack_new;
   reg          txd_ack_we;
-  
+
   reg [2 : 0]  etx_ctrl_reg;
   reg [2 : 0]  etx_ctrl_new;
   reg          etx_ctrl_we;
 
-  
+
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
   wire [15 : 0] half_bit_rate;
-  
-  
+
+
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
@@ -158,16 +158,16 @@ module uart_core(
   assign txd_ack  = txd_ack_reg;
 
   assign half_bit_rate = {1'b0, bit_rate[15 : 1]};
-  
-  
+
+
   //----------------------------------------------------------------
   // reg_update
   //
   // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset. All registers have write enable.
+  // All registers are positive edge triggered with
+  // asynchronous active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk)
+  always @ (posedge clk or negedge reset_n)
     begin: reg_update
       if (!reset_n)
         begin
@@ -177,7 +177,7 @@ module uart_core(
           rxd_bitrate_ctr_reg <= 16'h0000;
           rxd_syn_reg         <= 0;
           erx_ctrl_reg        <= ERX_IDLE;
-          
+
           txd_reg             <= 1;
           txd_byte_reg        <= 8'h00;
           txd_bit_ctr_reg     <= 4'h0;
@@ -205,22 +205,22 @@ module uart_core(
             begin
               rxd_bitrate_ctr_reg <= rxd_bitrate_ctr_new;
             end
-          
+
           if (rxd_syn_we)
             begin
               rxd_syn_reg <= rxd_syn_new;
             end
-          
+
           if (erx_ctrl_we)
             begin
               erx_ctrl_reg <= erx_ctrl_new;
             end
-          
+
           if (txd_we)
             begin
               txd_reg <= txd_new;
             end
-          
+
           if (txd_byte_we)
             begin
               txd_byte_reg <= txd_byte_new;
@@ -235,12 +235,12 @@ module uart_core(
             begin
               txd_bitrate_ctr_reg <= txd_bitrate_ctr_new;
             end
-          
+
           if (txd_ack_we)
             begin
               txd_ack_reg <= txd_ack_new;
             end
-          
+
           if (etx_ctrl_we)
             begin
               etx_ctrl_reg <= etx_ctrl_new;
@@ -252,7 +252,7 @@ module uart_core(
   //----------------------------------------------------------------
   // rxd_bit_ctr
   //
-  // Bit counter for receiving data on the external 
+  // Bit counter for receiving data on the external
   // serial interface.
   //----------------------------------------------------------------
   always @*
@@ -277,7 +277,7 @@ module uart_core(
   //----------------------------------------------------------------
   // rxd_bitrate_ctr
   //
-  // Bitrate counter for receiving data on the external 
+  // Bitrate counter for receiving data on the external
   // serial interface.
   //----------------------------------------------------------------
   always @*
@@ -303,7 +303,7 @@ module uart_core(
   //----------------------------------------------------------------
   // txd_bit_ctr
   //
-  // Bit counter for transmitting data on the external 
+  // Bit counter for transmitting data on the external
   // serial interface.
   //----------------------------------------------------------------
   always @*
@@ -328,7 +328,7 @@ module uart_core(
   //----------------------------------------------------------------
   // txd_bitrate_ctr
   //
-  // Bitrate counter for transmitting data on the external 
+  // Bitrate counter for transmitting data on the external
   // serial interface.
   //----------------------------------------------------------------
   always @*
@@ -348,14 +348,14 @@ module uart_core(
           txd_bitrate_ctr_we  = 1;
         end
     end // txd_bitrate_ctr
-  
+
 
   //----------------------------------------------------------------
   // external_rx_engine
   //
-  // Logic that implements the receive engine towards 
-  // the external interface. Detects incoming data, collects it, 
-  // if required checks parity and store correct data into 
+  // Logic that implements the receive engine towards
+  // the external interface. Detects incoming data, collects it,
+  // if required checks parity and store correct data into
   // the rx buffer.
   //----------------------------------------------------------------
   always @*
@@ -369,7 +369,7 @@ module uart_core(
       rxd_syn_we          = 0;
       erx_ctrl_new        = ERX_IDLE;
       erx_ctrl_we         = 0;
-      
+
       case (erx_ctrl_reg)
         ERX_IDLE:
           begin
@@ -405,7 +405,7 @@ module uart_core(
               end
           end
 
-        
+
         ERX_BITS:
           begin
             if (rxd_bitrate_ctr_reg < bit_rate)
@@ -425,7 +425,7 @@ module uart_core(
               end
           end
 
-        
+
         ERX_STOP:
           begin
             rxd_bitrate_ctr_inc = 1;
@@ -438,7 +438,7 @@ module uart_core(
               end
           end
 
-        
+
         ERX_SYN:
           begin
             if (rxd_ack)
@@ -450,7 +450,7 @@ module uart_core(
               end
           end
 
-        
+
         default:
           begin
 
@@ -462,7 +462,7 @@ module uart_core(
   //----------------------------------------------------------------
   // external_tx_engine
   //
-  // Logic that implements the transmit engine towards 
+  // Logic that implements the transmit engine towards
   // the external interface.
   //----------------------------------------------------------------
   always @*
@@ -497,7 +497,7 @@ module uart_core(
               end
           end
 
-        
+
         ETX_ACK:
           begin
             if (!txd_syn)
@@ -510,7 +510,7 @@ module uart_core(
                 etx_ctrl_we  = 1;
               end
           end
-        
+
         ETX_START:
           begin
             if (txd_bitrate_ctr_reg == bit_rate)
@@ -525,7 +525,7 @@ module uart_core(
               end
           end
 
-        
+
         ETX_BITS:
           begin
             if (txd_bitrate_ctr_reg < bit_rate)
@@ -535,7 +535,7 @@ module uart_core(
             else
               begin
                 txd_bitrate_ctr_rst = 1;
-                
+
                 if (txd_bit_ctr_reg == data_bits)
                   begin
                     txd_new      = 1;
@@ -551,8 +551,8 @@ module uart_core(
                   end
               end
           end
-        
-            
+
+
         ETX_STOP:
           begin
             txd_bitrate_ctr_inc = 1;
@@ -563,14 +563,14 @@ module uart_core(
               end
           end
 
-        
+
         default:
           begin
 
           end
       endcase // case (etx_ctrl_reg)
     end // external_tx_engine
-  
+
 endmodule // uart
 
 //======================================================================

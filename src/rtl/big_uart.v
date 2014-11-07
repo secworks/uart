@@ -3,9 +3,9 @@
 // uart.v
 // ------
 // A simple universal asynchronous receiver/transmitter (UART)
-// interface. The interface contains 16 byte wide transmit and 
-// receivea buffers and can handle start and stop bits. But in 
-// general is rather simple. The primary purpose is as host 
+// interface. The interface contains 16 byte wide transmit and
+// receivea buffers and can handle start and stop bits. But in
+// general is rather simple. The primary purpose is as host
 // interface for the coretest design. The core also has a
 // loopback mode to allow testing of a serial link.
 //
@@ -17,30 +17,30 @@
 //
 // Author: Joachim Strombergson
 // Copyright (c) 2014  Secworks Sweden AB
-// 
-// Redistribution and use in source and binary forms, with or 
-// without modification, are permitted provided that the following 
-// conditions are met: 
-// 
-// 1. Redistributions of source code must retain the above copyright 
-//    notice, this list of conditions and the following disclaimer. 
-// 
-// 2. Redistributions in binary form must reproduce the above copyright 
-//    notice, this list of conditions and the following disclaimer in 
-//    the documentation and/or other materials provided with the 
-//    distribution. 
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+//
+// Redistribution and use in source and binary forms, with or
+// without modification, are permitted provided that the following
+// conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in
+//    the documentation and/or other materials provided with the
+//    distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 // BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //======================================================================
@@ -52,7 +52,7 @@ module uart(
             // External interface
             input wire           rxd,
             output wire          txd,
-            
+
             // Internal interface
             output wire          rx_syn,
             output wire [7 : 0]  rx_data,
@@ -64,7 +64,7 @@ module uart(
 
             // Debug
             output wire [7 : 0]  debug,
-            
+
             // API interface
             input wire           cs,
             input wire           we,
@@ -73,8 +73,8 @@ module uart(
             output wire [31 : 0] read_data,
             output wire          error
            );
-  
-  
+
+
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
@@ -83,7 +83,7 @@ module uart(
   parameter ADDR_CORE_NAME1   = 4'h1;
   parameter ADDR_CORE_TYPE    = 4'h2;
   parameter ADDR_CORE_VERSION = 4'h3;
-  
+
   parameter ADDR_CTRL         = 4'h8; // Enable/disable. Loopback on/off.
   parameter ADDR_STATUS       = 4'h9; // Buffer status.
   parameter ADDR_CONFIG       = 4'ha; // Num start, data, stop, parity bits.
@@ -106,7 +106,7 @@ module uart(
   // Clock: 50 MHz
   // Bitrate: 1200 bps
   // Divisor = 5010E6 / (19200 * 4) = 651.041666
-  // Divisor = 50E6 / (1200 * 4) = 10416.6667 
+  // Divisor = 50E6 / (1200 * 4) = 10416.6667
   parameter DEFAULT_CLK_DIV = 10417;
 
   parameter DEFAULT_START_BITS = 2'h1;
@@ -116,18 +116,18 @@ module uart(
   parameter DEFAULT_ENABLE     = 1'h1;
   parameter DEFAULT_ILOOPBACK  = 1'h0;
   parameter DEFAULT_ELOOPBACK  = 1'h0;
-  
+
   parameter ITX_IDLE = 0;
   parameter ITX_ACK  = 1;
-  
+
   parameter ETX_IDLE   = 0;
   parameter ETX_START  = 1;
   parameter ETX_DATA   = 2;
   parameter ETX_PARITY = 3;
   parameter ETX_STOP   = 4;
   parameter ETX_DONE   = 5;
-  
-  
+
+
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
@@ -138,15 +138,15 @@ module uart(
   reg          enable_bit_reg;
   reg          enable_bit_new;
   reg          enable_bit_we;
-  
+
   reg          iloopback_bit_reg;
   reg          iloopback_bit_new;
   reg          iloopback_bit_we;
-  
+
   reg          eloopback_bit_reg;
   reg          eloopback_bit_new;
   reg          eloopback_bit_we;
-  
+
   reg [1 : 0]  start_bits_reg;
   reg [1 : 0]  start_bits_new;
   reg          start_bits_we;
@@ -162,14 +162,14 @@ module uart(
   reg          parity_bit_reg;
   reg          parity_bit_new;
   reg          parity_bit_we;
-  
+
   // Rx data buffer with associated
   // read and write pointers as well
   // as counter for number of elements
   // in the buffer.
   reg [7 : 0] rx_buffer [0 : 15];
   reg         rx_buffer_we;
-  
+
   reg [3 : 0] rx_rd_ptr_reg;
   reg [3 : 0] rx_rd_ptr_new;
   reg         rx_rd_ptr_we;
@@ -208,7 +208,7 @@ module uart(
   reg         tx_ctr_we;
   reg         tx_ctr_inc;
   reg         tx_ctr_dec;
-  
+
   reg         rxd_reg;
 
   reg [7 : 0] rxd_byte_reg;
@@ -234,7 +234,7 @@ module uart(
   reg          rxd_bitrate_ctr_we;
   reg          rxd_bitrate_ctr_rst;
   reg          rxd_bitrate_ctr_inc;
-  
+
   reg [2 : 0] txd_bit_ctr_reg;
   reg [2 : 0] txd_bit_ctr_new;
   reg         txd_bit_ctr_we;
@@ -252,28 +252,28 @@ module uart(
   reg          rx_parity_error_ctr_we;
   reg          rx_parity_error_ctr_inc;
   reg          rx_parity_error_ctr_rst;
-  
+
   reg [31 : 0] rx_buffer_full_ctr_reg;
   reg [31 : 0] rx_buffer_full_ctr_new;
   reg          rx_buffer_full_ctr_we;
   reg          rx_buffer_full_ctr_inc;
   reg          rx_buffer_full_ctr_rst;
-  
+
   reg [31 : 0] tx_buffer_full_ctr_reg;
   reg [31 : 0] tx_buffer_full_ctr_new;
   reg          tx_buffer_full_ctr_we;
   reg          tx_buffer_full_ctr_inc;
   reg          tx_buffer_full_ctr_rst;
-               
+
   reg          itx_ctrl_reg;
   reg          itx_ctrl_new;
   reg          itx_ctrl_we;
-               
+
   reg [2 : 0]  etx_ctrl_reg;
   reg [2 : 0]  etx_ctrl_new;
   reg          etx_ctrl_we;
-  
-  
+
+
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
@@ -286,20 +286,20 @@ module uart(
   reg          tmp_rx_syn;
   reg [7 : 0]  tmp_rx_data;
   reg          tmp_tx_ack;
-  
+
   reg          internal_rx_syn;
   reg [7 : 0]  internal_rx_data;
   reg          internal_rx_ack;
   reg          internal_tx_syn;
   reg [7 : 0]  internal_tx_data;
   reg          internal_tx_ack;
-  
+
   reg          rx_empty;
   reg          rx_full;
   reg          tx_empty;
   reg          tx_full;
 
-  
+
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
@@ -308,22 +308,22 @@ module uart(
   assign rx_syn  = tmp_rx_syn;
   assign rx_data = tmp_rx_data;
   assign tx_ack  = tmp_tx_ack;
-  
+
   assign read_data = tmp_read_data;
   assign error     = tmp_error;
-  
-  assign debug = {rxd_reg, rxd_reg, rxd_reg, rxd_reg, 
+
+  assign debug = {rxd_reg, rxd_reg, rxd_reg, rxd_reg,
                   rxd_reg, rxd_reg, rxd_reg, rxd_reg};
 
-  
+
   //----------------------------------------------------------------
   // reg_update
   //
   // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset. All registers have write enable.
+  // All registers are positive edge triggered with
+  // asynchronous active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk)
+  always @ (posedge clk or negedge reset_n)
     begin: reg_update
       if (!reset_n)
         begin
@@ -335,12 +335,12 @@ module uart(
           enable_bit_reg          <= DEFAULT_ENABLE;
           iloopback_bit_reg       <= DEFAULT_ILOOPBACK;
           eloopback_bit_reg       <= DEFAULT_ELOOPBACK;
-          
+
           rxd_reg                 <= 0;
           rxd_byte_reg            <= 8'h00;
           txd_reg                 <= 0;
           txd_byte_reg            <= 8'h00;
-          
+
           rx_rd_ptr_reg           <= 4'h0;
           rx_wr_ptr_reg           <= 4'h0;
           rx_ctr_reg              <= 4'h0;
@@ -352,7 +352,7 @@ module uart(
           rxd_bitrate_ctr_reg     <= 16'h0000;
           txd_bit_ctr_reg         <= 3'b000;
           txd_bitrate_ctr_reg     <= 16'h0000;
-          
+
           rx_parity_error_ctr_reg <= 32'h00000000;
           rx_buffer_full_ctr_reg  <= 32'h00000000;
           tx_buffer_full_ctr_reg  <= 32'h00000000;
@@ -364,7 +364,7 @@ module uart(
         begin
           // We sample the rx input port every cycle.
           rxd_reg <= rxd;
-          
+
           if (rxd_byte_we)
             begin
               rxd_byte_reg <= {rxd_byte_reg[6 : 1], rxd_reg};
@@ -379,7 +379,7 @@ module uart(
             begin
               txd_byte_reg <= tx_buffer[tx_rd_ptr_reg];
             end
-                    
+
           if (clk_div_we)
             begin
               clk_div_reg <= clk_div_new;
@@ -429,32 +429,32 @@ module uart(
             begin
               tx_buffer[tx_wr_ptr_reg] <= tx_data;
             end
-          
+
           if (rx_rd_ptr_we)
             begin
               rx_rd_ptr_reg <= rx_rd_ptr_new;
             end
-          
+
           if (rx_wr_ptr_we)
             begin
               rx_wr_ptr_reg <= rx_wr_ptr_new;
             end
-          
+
           if (rx_ctr_we)
             begin
               rx_ctr_reg <= rx_ctr_new;
             end
-          
+
           if (tx_rd_ptr_we)
             begin
               tx_rd_ptr_reg <= tx_rd_ptr_new;
             end
-          
+
           if (tx_wr_ptr_we)
             begin
               tx_wr_ptr_reg <= tx_wr_ptr_new;
             end
-          
+
           if (tx_ctr_we)
             begin
               tx_ctr_reg <= tx_ctr_new;
@@ -538,7 +538,7 @@ module uart(
       rx_parity_error_ctr_rst = 0;
       rx_buffer_full_ctr_rst  = 0;
       tx_buffer_full_ctr_rst  = 0;
-      
+
       if (cs)
         begin
           if (we)
@@ -566,7 +566,7 @@ module uart(
                     parity_bit_new = write_data[8];
                     parity_bit_we  = 1;
                   end
-                
+
                 ADDR_CLK_DIV:
                   begin
                     clk_div_new = write_data[15 : 0];
@@ -590,7 +590,7 @@ module uart(
                     // Note that we ignore the data being written.
                     tx_buffer_full_ctr_rst = 1;
                   end
-                
+
                 default:
                   begin
                     tmp_error = 1;
@@ -626,19 +626,19 @@ module uart(
                     tmp_read_data = {28'h0000000, 2'b01, eloopback_bit_reg,
                                      iloopback_bit_reg, enable_bit_reg};
                   end
-                
+
                 ADDR_STATUS:
                   begin
                     tmp_read_data = {24'h000000, tx_ctr_reg, rx_ctr_reg};
                   end
-                
+
                 ADDR_CONFIG:
                   begin
-                    tmp_read_data = {20'h00000, 3'b000, 
+                    tmp_read_data = {20'h00000, 3'b000,
                                      parity_bit_reg, data_bits_reg,
                                      stop_bits_reg, start_bits_reg};
                   end
-                
+
                 ADDR_CLK_DIV:
                   begin
                     tmp_read_data = {16'h0000, clk_div_reg};
@@ -648,17 +648,17 @@ module uart(
                   begin
                     tmp_read_data = rx_parity_error_ctr_reg;
                   end
-                
+
                 ADDR_STAT_RX_FULL:
                   begin
                     tmp_read_data = rx_buffer_full_ctr_reg;
                   end
-                
+
                 ADDR_STAT_TX_FULL:
                   begin
                     tmp_read_data = tx_buffer_full_ctr_reg;
                   end
-                
+
                 default:
                   begin
                     tmp_error = 1;
@@ -668,13 +668,13 @@ module uart(
         end
     end
 
-  
+
   //----------------------------------------------------------------
   // eloopback_mux
   //
   // The mux controlled by the eloopback_bit_reg. If set the
   // interfaces towards the external system is tied together
-  // making the UART echoing received data back to 
+  // making the UART echoing received data back to
   // the external host.
   //----------------------------------------------------------------
   always @*
@@ -691,13 +691,13 @@ module uart(
         end
     end // eloopback_mux
 
-  
+
   //----------------------------------------------------------------
   // iloopback_mux
   //
   // The mux controlled by the iloopback_bit_reg. If set the
   // interfaces towards the internal system is tied together
-  // making the UART echoing received back to the external host 
+  // making the UART echoing received back to the external host
   // via the buffers and serial/parallel conversions
   //----------------------------------------------------------------
 //  always @*
@@ -776,7 +776,7 @@ module uart(
         begin
           rx_empty = 1;
         end
-      
+
       if ((rx_ctr_inc) && (!rx_ctr_dec))
         begin
           rx_ctr_new = rx_ctr_reg + 1'b1;
@@ -789,7 +789,7 @@ module uart(
         end
     end // rx_ctr
 
-  
+
   //----------------------------------------------------------------
   // tx_rd_ptr
   //
@@ -841,7 +841,7 @@ module uart(
         begin
           tx_full = 1;
         end
-      
+
       if ((tx_ctr_inc) && (!tx_ctr_dec))
         begin
           tx_ctr_new = tx_ctr_reg + 1'b1;
@@ -859,22 +859,22 @@ module uart(
   // external_rx_engine
   //
   // Logic that implements the receive engine towards the externa
-  // interface. Detects incoming data, collects it, if required 
+  // interface. Detects incoming data, collects it, if required
   // checks parity and store correct data into the rx buffer.
   //----------------------------------------------------------------
   always @*
     begin: external_rx_engine
-      
+
 
     end // external_rx_engine
 
-  
+
   //----------------------------------------------------------------
   // external_tx_engine
   //
   // Logic that implements the transmit engine towards the external
-  // interface. When there is data in the tx buffer, the engine 
-  // transmits the data including start, stop and possible 
+  // interface. When there is data in the tx buffer, the engine
+  // transmits the data including start, stop and possible
   // parity bits.
   //----------------------------------------------------------------
   always @*
@@ -889,7 +889,7 @@ module uart(
       txd_bitrate_ctr_inc = 0;
       etx_ctrl_new        = ETX_IDLE;
       etx_ctrl_we         = 0;
-      
+
       case (etx_ctrl_reg)
         ETX_IDLE:
           begin
@@ -914,7 +914,7 @@ module uart(
   //
   // Logic that implements the receive engine towards the internal
   // interface. When there is data in the rx buffer it asserts
-  // the syn flag to signal that there is data available on 
+  // the syn flag to signal that there is data available on
   // rx_data. When the ack signal is asserted the syn flag is
   // dropped and the data is considered to have been consumed and
   // can be discarded.
@@ -943,7 +943,7 @@ module uart(
       tmp_tx_ack    = 0;
       itx_ctrl_new  = ITX_IDLE;
       itx_ctrl_we   = 0;
-      
+
       case (itx_ctrl_reg)
         ITX_IDLE:
           begin
@@ -971,7 +971,7 @@ module uart(
           end
       endcase // case (itx_ctrl_reg)
     end // internal_tx_engine
-  
+
 endmodule // uart
 
 //======================================================================

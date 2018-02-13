@@ -1,9 +1,9 @@
 uart
 ====
 
-A Universal asynchronous receiver/transmitter (UART) implemented in Verilog.
-
-This UART used to be in coretest, but has been moved out as a separate
-project.
+A simple universal asynchronous receiver/transmitter (UART) core
+implemented in Verilog.
 
 
+# Status
+The core is completed and has been used in several FPGA designs.

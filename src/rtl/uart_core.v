@@ -171,18 +171,18 @@ module uart_core(
     begin: reg_update
       if (!reset_n)
         begin
-          rxd_reg             <= 0;
-          rxd_byte_reg        <= 8'h00;
-          rxd_bit_ctr_reg     <= 4'h0;
-          rxd_bitrate_ctr_reg <= 16'h0000;
+          rxd_reg             <= 1'b0;
+          rxd_byte_reg        <= 8'h0;
+          rxd_bit_ctr_reg     <= 5'h0;
+          rxd_bitrate_ctr_reg <= 16'h0;
           rxd_syn_reg         <= 0;
           erx_ctrl_reg        <= ERX_IDLE;
 
-          txd_reg             <= 1;
-          txd_byte_reg        <= 8'h00;
-          txd_bit_ctr_reg     <= 4'h0;
-          txd_bitrate_ctr_reg <= 16'h0000;
-          txd_ack_reg         <= 0;
+          txd_reg             <= 1'b1;
+          txd_byte_reg        <= 8'h0;
+          txd_bit_ctr_reg     <= 5'h0;
+          txd_bitrate_ctr_reg <= 16'h0;
+          txd_ack_reg         <= 1'b0;
           etx_ctrl_reg        <= ETX_IDLE;
         end
       else
@@ -257,19 +257,19 @@ module uart_core(
   //----------------------------------------------------------------
   always @*
     begin: rxd_bit_ctr
-      rxd_bit_ctr_new = 4'h0;
-      rxd_bit_ctr_we  = 0;
+      rxd_bit_ctr_new = 5'h0;
+      rxd_bit_ctr_we  = 1'b0;
 
       if (rxd_bit_ctr_rst)
         begin
-          rxd_bit_ctr_new = 4'h0;
-          rxd_bit_ctr_we  = 1;
+          rxd_bit_ctr_new = 5'h0;
+          rxd_bit_ctr_we  = 1'b1;
         end
 
       else if (rxd_bit_ctr_inc)
         begin
           rxd_bit_ctr_new = rxd_bit_ctr_reg + 4'b0001;
-          rxd_bit_ctr_we  = 1;
+          rxd_bit_ctr_we  = 1'b1;
         end
     end // rxd_bit_ctr
 
@@ -282,19 +282,19 @@ module uart_core(
   //----------------------------------------------------------------
   always @*
     begin: rxd_bitrate_ctr
-      rxd_bitrate_ctr_new = 16'h0000;
-      rxd_bitrate_ctr_we  = 0;
+      rxd_bitrate_ctr_new = 16'h0;
+      rxd_bitrate_ctr_we  = 1'b0;
 
       if (rxd_bitrate_ctr_rst)
         begin
-          rxd_bitrate_ctr_new = 16'h0000;
-          rxd_bitrate_ctr_we  = 1;
+          rxd_bitrate_ctr_new = 16'h0;
+          rxd_bitrate_ctr_we  = 1'b1;
         end
 
       else if (rxd_bitrate_ctr_inc)
         begin
           rxd_bitrate_ctr_new = rxd_bitrate_ctr_reg + 16'h0001;
-          rxd_bitrate_ctr_we  = 1;
+          rxd_bitrate_ctr_we  = 1'b1;
         end
     end // rxd_bitrate_ctr
 
@@ -308,19 +308,19 @@ module uart_core(
   //----------------------------------------------------------------
   always @*
     begin: txd_bit_ctr
-      txd_bit_ctr_new = 4'h0;
-      txd_bit_ctr_we  = 0;
+      txd_bit_ctr_new = 5'h0;
+      txd_bit_ctr_we  = 1'b0;
 
       if (txd_bit_ctr_rst)
         begin
-          txd_bit_ctr_new = 4'h0;
-          txd_bit_ctr_we  = 1;
+          txd_bit_ctr_new = 5'h0;
+          txd_bit_ctr_we  = 1'b1;
         end
 
       else if (txd_bit_ctr_inc)
         begin
           txd_bit_ctr_new = txd_bit_ctr_reg + 4'b0001;
-          txd_bit_ctr_we  = 1;
+          txd_bit_ctr_we  = 1'b1;
         end
     end // txd_bit_ctr
 

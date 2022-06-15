@@ -1,4 +1,4 @@
-Name: build-openlane-sky130
+name: build-openlane-sky130
 on: [push]
 
 jobs:

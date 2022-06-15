@@ -1,0 +1,39 @@
+CAPI=2:
+
+name : secworks:util:uart:0
+
+filesets:
+  rtl:
+    files:
+      - src/rtl/uart.v
+      - src/rtl/uart_core.v
+    file_type : verilogSource
+
+  tb:
+    files:
+      - src/tb/tb_uart.v
+    file_type : verilogSource
+
+  openlane: {files : [data/sky130.tcl : {file_type : tclSource}]}
+
+targets:
+  default:
+    filesets: [rtl]
+
+  lint:
+    default_tool : verilator
+    filesets : [rtl]
+    tools:
+      verilator:
+        mode : lint-only
+    toplevel : uart
+
+  sky130:
+    default_tool: openlane
+    filesets: [rtl, openlane]
+    toplevel: uart
+
+  tb_uart : &tb
+    default_tool: icarus
+    filesets: [rtl, tb]
+    toplevel : tb_uart

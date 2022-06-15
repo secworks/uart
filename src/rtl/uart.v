@@ -82,29 +82,29 @@ module uart(
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
   // API addresses.
-  parameter ADDR_CORE_NAME0   = 8'h00;
-  parameter ADDR_CORE_NAME1   = 8'h01;
-  parameter ADDR_CORE_TYPE    = 8'h02;
-  parameter ADDR_CORE_VERSION = 8'h03;
+  localparam ADDR_CORE_NAME0   = 8'h00;
+  localparam ADDR_CORE_NAME1   = 8'h01;
+  localparam ADDR_CORE_TYPE    = 8'h02;
+  localparam ADDR_CORE_VERSION = 8'h03;
 
-  parameter ADDR_BIT_RATE     = 8'h10;
-  parameter ADDR_DATA_BITS    = 8'h11;
-  parameter ADDR_STOP_BITS    = 8'h12;
+  localparam ADDR_BIT_RATE     = 8'h10;
+  localparam ADDR_DATA_BITS    = 8'h11;
+  localparam ADDR_STOP_BITS    = 8'h12;
 
   // Core ID constants.
-  parameter CORE_NAME0   = 32'h75617274;  // "uart"
-  parameter CORE_NAME1   = 32'h20202020;  // "    "
-  parameter CORE_TYPE    = 32'h20202031;  // "   1"
-  parameter CORE_VERSION = 32'h302e3031;  // "0.01"
+  localparam CORE_NAME0   = 32'h75617274;  // "uart"
+  localparam CORE_NAME1   = 32'h20202020;  // "    "
+  localparam CORE_TYPE    = 32'h20202031;  // "   1"
+  localparam CORE_VERSION = 32'h302e3031;  // "0.01"
 
   // The default bit rate is based on target clock frequency
   // divided by the bit rate times in order to hit the
   // center of the bits. I.e.
   // Clock: 50 MHz, 9600 bps
   // Divisor = 50*10E6 / 9600 = 5208
-  parameter DEFAULT_BIT_RATE  = 16'd5208;
-  parameter DEFAULT_DATA_BITS = 4'h8;
-  parameter DEFAULT_STOP_BITS = 2'h1;
+  localparam DEFAULT_BIT_RATE  = 16'd5208;
+  localparam DEFAULT_DATA_BITS = 4'h8;
+  localparam DEFAULT_STOP_BITS = 2'h1;
 
 
   //----------------------------------------------------------------
@@ -243,9 +243,9 @@ module uart(
       bit_rate_we   = 0;
       data_bits_new = 4'h0;
       data_bits_we  = 0;
-      stop_bits_new = 2'b00;
+      stop_bits_new = 2'h0;
       stop_bits_we  = 0;
-      tmp_read_data = 32'h00000000;
+      tmp_read_data = 32'h0;
       tmp_error     = 0;
 
       if (cs)

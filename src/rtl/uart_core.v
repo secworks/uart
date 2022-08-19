@@ -72,17 +72,17 @@ module uart_core(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter ERX_IDLE  = 0;
-  parameter ERX_START = 1;
-  parameter ERX_BITS  = 2;
-  parameter ERX_STOP  = 3;
-  parameter ERX_SYN   = 4;
+  localparam ERX_IDLE  = 0;
+  localparam ERX_START = 1;
+  localparam ERX_BITS  = 2;
+  localparam ERX_STOP  = 3;
+  localparam ERX_SYN   = 4;
 
-  parameter ETX_IDLE  = 0;
-  parameter ETX_ACK   = 1;
-  parameter ETX_START = 2;
-  parameter ETX_BITS  = 3;
-  parameter ETX_STOP  = 4;
+  localparam ETX_IDLE  = 0;
+  localparam ETX_ACK   = 1;
+  localparam ETX_START = 2;
+  localparam ETX_BITS  = 3;
+  localparam ETX_STOP  = 4;
 
 
   //----------------------------------------------------------------

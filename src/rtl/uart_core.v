@@ -4,9 +4,8 @@
 // -----------
 // A simple universal asynchronous receiver/transmitter (UART)
 // interface. The interface contains 16 byte wide transmit and
-// receivea buffers and can handle start and stop bits. But in
-// general is rather simple. The primary purpose is as host
-// interface for the coretest design. The core also has a
+// receive buffers and can handle start and stop bits. But in
+// general is rather simple. The core also has a
 // loopback mode to allow testing of a serial link.
 //
 // Note that the UART has a separate API interface to allow
